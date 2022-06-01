@@ -299,7 +299,7 @@ implementation:
   | OPEN c = CONSTRUCTOR
       { Eopen c }
   | TYPE tp = type_params id = IDENT td = localized(type_declaration_desc)
-      { Etypedecl(id, tp, td) }
+      { Printf.printf "implementation\n"; Etypedecl(id, tp, td) }
   | LET ide = ide EQUAL seq = seq_expression
       { Econstdecl(ide, false, seq) }
   | LET STATIC ide = ide EQUAL seq = seq_expression
@@ -388,7 +388,7 @@ interface:
   | OPEN c = CONSTRUCTOR
       { Einter_open(c) }
   | TYPE tp = type_params i = IDENT td = localized(type_declaration_desc)
-      { Einter_typedecl(i, tp, td) }
+      {Printf.printf "interface\n"; Einter_typedecl(i, tp, td) }
   | VAL i = ide COLON t = type_expression
       { Einter_constdecl(i, t) }
 ;
@@ -405,7 +405,7 @@ scalar_interface :
   | OPEN c = CONSTRUCTOR
       { [make (Einter_open(c)) $startpos $endpos] }
   | TYPE tp = type_params i = IDENT td = localized(type_declaration_desc)
-      { [make (Einter_typedecl(i, tp, td)) $startpos $endpos] }
+      { Printf.printf "scalar interface\n"; [make (Einter_typedecl(i, tp, td)) $startpos $endpos] }
   | VAL i = ide COLON t = type_expression
       { [make (Einter_constdecl(i, t)) $startpos $endpos] }
   | EXTERNAL i = ide COLON t = type_expression EQUAL list_no_sep_of(STRING)
@@ -420,13 +420,19 @@ type_declaration_desc:
   | /* empty */
       { Eabstract_type }
   | EQUAL l = list_of(BAR, localized(constr_decl_desc))
-      { Evariant_type (l) }
+      { Printf.printf "evariant type "; Evariant_type (l) }
   | EQUAL BAR l = list_of(BAR, localized(constr_decl_desc))
-      { Evariant_type (l) }
+      { Printf.printf "evariant type bar "; Evariant_type (l) }
   | EQUAL LBRACE s = label_list(label_type) RBRACE
-      { Erecord_type (s) }
+      { Printf.printf "erocord type "; Erecord_type (s) }
+//    type circle = { center: float * float; radius: float }
+//   | EQUAL LBRACE (*variable = ide COLON basetype = ide*) label_type = lebel_type BAR seq = seq_expression RBRACE
+//         {Printf.printf "erefinement "; Ecustome_refinment_type (label_type, seq)}    
+// //         (* nat = { v : int | v >= 0 } *)
+
+
   | EQUAL t = type_expression
-      { Eabbrev(t) }
+      {Printf.printf "eabbrev ";  Eabbrev(t) }
 ;
 
 type_params :
@@ -456,7 +462,7 @@ constr_decl_desc:
   | c = CONSTRUCTOR
       { Econstr0decl(c) }
   | c = CONSTRUCTOR OF l = list_of(STAR, simple_type)
-      { Econstr1decl(c, l) }
+      { Printf.printf "constr decl desc\n"; Econstr1decl(c, l) }
 ;
 
 equation_empty_list:
@@ -905,8 +911,10 @@ simple_expression_desc:
   | c = constructor
       { Printf.printf "Desc constr0\n"; Econstr0(c) }
   (* support for refinement types *)
+  
+  
   | name_var = ide COLON basetype = ide LBRACE seq1 = seq_expression RBRACE 
-      { Printf.printf "Refinement tuple\n"; Erefinementtype(name_var, basetype, seq1) }
+      { Printf.printf "Refinement type\n"; Erefinementtype(name_var, basetype, seq1) }
   | i = ext_ident
       { Printf.printf "Desc var\n"; Evar i }
   | LBRACKET RBRACKET
@@ -1142,16 +1150,16 @@ label_expression:
 /* identifiers */
 ide:
   | i = IDENT
-      { i }
+      { Printf.printf "Ident\n"; i }
   | LPAREN i = infx RPAREN
-      { i }
+      { Printf.printf "( infx )\n"; i }
 ;
 
 ext_ident :
   | q = qual_ident
-      { Modname(q) }
+      { Printf.printf "qual ident\n"; Modname(q) }
   | i = ide
-      { Name(i) }
+      { Printf.printf "ide \n"; Name(i) }
 ;
 
 infx:
@@ -1205,7 +1213,7 @@ size_expression_desc:
 
 type_expression:
   | t = simple_type
-      { t }
+      {Printf.printf "type expression simple type\n"; t }
   | tl = type_star_list
       { Printf.printf "type star list\n"; make(Etypetuple(List.rev tl)) $startpos $endpos}
   (* functions with refinement pairs *)
@@ -1247,9 +1255,9 @@ simple_type:
 
 type_star_list:
   | t1 = simple_type STAR t2 = simple_type
-      { [t2; t1] }
+      { Printf.printf "type star list t2; t1 \n"; [t2; t1] }
   | tsl = type_star_list STAR t = simple_type
-      { t :: tsl }
+      { Printf.printf "type star list t::tsl \n"; t :: tsl }
 ;
 
 type_var :
@@ -1259,9 +1267,9 @@ type_var :
 
 type_comma_list :
   | te = type_expression COMMA tl = type_comma_list
-      { te :: tl }
+      { Printf.printf " type comma list te :: tl\n"; te :: tl }
   | te = type_expression
-      { [te] }
+      {Printf.printf "type comma list te\n"; [te] }
 ;
 
 %inline kind:
