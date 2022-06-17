@@ -198,6 +198,7 @@ and eq = eqdesc localized
 and eqdesc =
   | EQeq of pattern * exp
     (* [p = e] *)
+  | EQrefineeq of pattern * type_expression *exp
   | EQder of name * exp * exp option * exp present_handler list
     (* [der n = e [init e0] [reset p1 -> e1 | ... | pn -> en]] *)
   | EQinit of name * exp
