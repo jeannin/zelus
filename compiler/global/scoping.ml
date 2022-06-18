@@ -339,6 +339,7 @@ let rec build_equation_list defnames eq_list =
 and build_equation defnames eq =
   match eq.desc with
     | EQeq(pat, _) -> build false defnames pat
+    | EQrefineeq(p, t, _) -> build false defnames p 
     | EQemit(n, _) | EQder(n, _, _, _) | EQinit(n, _)
     | EQnext(n, _, _) | EQpluseq(n, _) -> 
         if S.mem n defnames then defnames else S.add n defnames
@@ -759,6 +760,9 @@ and equation env_pat env eq_list { desc = desc; loc = loc } =
   | EQeq(pat, e) ->
      eqmake loc
 	    (Zelus.EQeq(check_pattern env_pat pat, expression env e)) :: eq_list
+  | EQrefineeq(p, _, e) ->
+     eqmake loc
+      (Zelus.EQeq(check_pattern env_pat p, expression env e)) :: eq_list
   | EQder(n, e, e0_opt, p_h_e_list) ->
      let e = expression env e in
      let e0_opt = Zmisc.optional_map (expression env) e0_opt in
