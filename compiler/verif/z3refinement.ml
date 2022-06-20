@@ -57,6 +57,16 @@ type env_structure =
   exp_env : expr list ref;
   var_env : (string, expr) Hashtbl.t;
 }
+type custom_t = {
+(*
+      string base_type;
+      string reference_variable;
+      z3_expression Phi(reference_variable);
+*)
+  base_type : string;
+  reference_variable : string;
+  phi : exp;
+}
 
 let add_constraint ({ exp_env = env; var_env = v}) premise = 
 (*
@@ -80,7 +90,7 @@ type function_desc =
 *)
 {
   argument_constraints: expr list;
-  variable_maps: (string, string) Hashtbl.t;
+  variable_maps: (string, custom_t) Hashtbl.t;
   argument_list: string list;
   creation_env: env_structure;
 }
@@ -314,7 +324,7 @@ let print_function_temp n f =
       List.iter (fun a -> (Printf.printf "%s; " (Expr.to_string a))) f.argument_constraints;
       Printf.printf "\n";
       Printf.printf "Variable map:\n";
-      Hashtbl.iter (fun a b -> (Printf.printf "%s:%s; " a b)) f.variable_maps;
+      Hashtbl.iter (fun a b -> (Printf.printf "%s:%s; " a b.base_type)) f.variable_maps;
       Printf.printf "\n";
       Printf.printf "Argument list:\n";
       List.iter (fun a -> (Printf.printf "%s; " a)) f.argument_list;
@@ -416,7 +426,7 @@ let print_function n f =
     List.iter (fun a -> (Printf.printf "%s; " (Expr.to_string a))) f.argument_constraints;
     Printf.printf "\n";
     Printf.printf "Variable map:\n";
-    Hashtbl.iter (fun a b -> (Printf.printf "%s:%s; " a b)) f.variable_maps;
+    Hashtbl.iter (fun a b -> (Printf.printf "%s:%s; " a b.base_type)) f.variable_maps;
     Printf.printf "\n";
     Printf.printf "Argument list:\n";
     List.iter (fun a -> (Printf.printf "%s; " a)) f.argument_list;
@@ -466,6 +476,7 @@ let rec vc_gen_equation ctx env typenv eq =
     ctx    -> z3 context
     env    -> environment (list of z3 vc_gen_expression)
     typenv -> typing environment ( Hash table of string = variable name * string = base type)
+    [CHANGE] typenv -> typing environment ( Hash table of string = variable name * custom_t = type)
     eq     -> zelus vc_gen_equation
 
     Creates z3 vc_gen_expression from zelus vc_gen_equation
@@ -698,6 +709,7 @@ and vc_gen_operator ctx env typenv e e_list =
         ctx    -> z3 context
         env    -> environment (list of z3 vc_gen_expressions)
         typenv -> typing environment ( Hash table of string = variable name * string = base type)
+        [CHANGE] typenv -> typing environment ( Hash table of string = variable name * custom_t = type)
         e      -> vc_gen_expression vc_gen_operator
         e_list -> vc_gen_expression list, contains left and right arguments used by vc_gen_operator
 
@@ -791,6 +803,7 @@ and vc_gen_expression ctx env ({ e_desc = desc; e_loc = loc }) typenv =
         desc   -> vc_gen_expression desciption
         loc    -> vc_gen_expression location
         typenv -> typing environment ( Hash table of string = variable name * string = base type)
+        [CHANGE] typenv -> typing environment ( Hash table of string = variable name * custom_t = type)
 
         Processes zelus vc_gen_expression into z3 vc_gen_expression
 
@@ -809,9 +822,9 @@ and vc_gen_expression ctx env ({ e_desc = desc; e_loc = loc }) typenv =
     | Elocal(n) -> debug(Printf.sprintf "Elocal: %s : %d\n" n.source n.num);
           (match typenv with
           | Some(t) -> let ismember = (Hashtbl.mem t n.source)
-            in (if ismember then (let basetype = (Hashtbl.find t n.source) in
-            debug(Printf.sprintf "%s has type %s" n.source basetype);
-              (create_z3_var_typed ctx env n.source basetype))
+            in (if ismember then (let customtype = (Hashtbl.find t n.source) in
+            debug(Printf.sprintf "%s has type %s" n.source customtype.base_type);
+              (create_z3_var_typed ctx env n.source customtype.base_type))
           else
             (debug(Printf.sprintf "Creating var: %s\n" n.source); immediate ctx (Estring(n.source))) )
           | _ -> debug(Printf.sprintf "Error: typenv not given!\n"); Expr.mk_const ctx (Symbol.mk_string ctx n.source) (Real.mk_sort ctx))
@@ -1025,6 +1038,7 @@ and get_return_type ctx env ({ e_desc = desc; e_loc = loc }) typenv =
       desc   ->  vc_gen_expression description
       loc    ->  vc_gen_expression location
       typenv ->  typing environment ( Hash table of string = variable name * string = base type)
+      [CHANGE] typenv -> typing environment ( Hash table of string = variable name * custom_t = type)
       
       Converts the last vc_gen_expression defined within a function to a Z3 vc_gen_expression
 
@@ -1101,12 +1115,12 @@ and add_tuple_list_to_type_env ctx env pat_list typ_exp typenv =
             | Erefinement(t, e) -> debug(Printf.sprintf "Adding to table: %s\n" n.source); 
               (
               match typenv with
-              | Some(tbl) -> Hashtbl.add tbl n.source (match t.desc with 
+              | Some(tbl) -> Hashtbl.add tbl n.source {base_type = (match t.desc with 
               (* Find and then add base type to local typing environment *)
               | Etypeconstr(l,_) -> (match l with
                   | Name(s) -> s
                   | Modname(q) -> q.id)
-              | _ -> "Unspecified typenv match\n")
+              | _ -> "Unspecified typenv match\n"); reference_variable = n.source; phi = e}
               | None -> ()
               )
             | Etypevar(n) -> debug(Printf.sprintf "Etypevar : %s\n" n)
@@ -1138,6 +1152,7 @@ and vc_gen_typ_exp_desc ctx env typenv t =
       ctx    -> z3 context
       env    -> environment (list of z3 vc_gen_expressions)
       typenv -> typing environment ( Hash table of string = variable name * string = base type)
+      [CHANGE] typenv -> typing environment ( Hash table of string = variable name * custom_t = type)
       t      -> type vc_gen_expression 
 
       Creates z3 vc_gen_expression from type vc_gen_expression and adds it to the environment
@@ -1161,6 +1176,7 @@ and vc_gen_pattern ctx env typenv pat =
       ctx    ->  z3 context     
       env    ->  environment (list of z3 vc_gen_expressions)
       typenv ->  typing environment ( Hash table of string = variable name * string = base type)
+      [CHANGE] typenv -> typing environment ( Hash table of string = variable name * custom_t = type)
       pat    ->  vc_gen_pattern vc_gen_expression to be processed
 
       Processes the vc_gen_pattern vc_gen_expression and modifies the typing environment to account for new vc_gen_expressions
@@ -1183,14 +1199,14 @@ and vc_gen_pattern ctx env typenv pat =
           (match typ_exp.desc with
           | Erefinement(t, e) -> debug(Printf.sprintf "Adding to table: %s\n" n.source); 
             (
-              match typenv with
-                | Some(tbl) -> Hashtbl.add tbl n.source (match t.desc with 
-                (* Find and then add base type to local typing environment *)
-                | Etypeconstr(l,_) -> (match l with
-                    | Name(s) -> s
-                    | Modname(q) -> q.id)
-                | _ -> "Unspecified typenv match\n")
-                | None -> ()
+            match typenv with
+            | Some(tbl) -> Hashtbl.add tbl n.source {base_type = (match t.desc with 
+            (* Find and then add base type to local typing environment *)
+            | Etypeconstr(l,_) -> (match l with
+                | Name(s) -> s
+                | Modname(q) -> q.id)
+            | _ -> "Unspecified typenv match\n"); reference_variable = n.source; phi = e}
+            | None -> ()
             )
           | Erefinementpairfuntype(t_exp_list, e) -> debug(Printf.sprintf "Erefinementpairfuntype\n")
           | Erefinementpair(n, t_exp) -> debug(Printf.sprintf "Erefinementpair\n")
@@ -1208,6 +1224,7 @@ and vc_gen_pattern ctx env typenv pat =
 let get_argument_list typenv =
 (*
   typenv -> typing environment Hash table of string * string
+  [CHANGE] typenv -> typing environment ( Hash table of string = variable name * custom_t = type)
 
   Iterates through hash tables and retrieves first element to the argument list
 
@@ -1251,7 +1268,7 @@ let implementation ff ctx env (impl (*: Zelus.implementation_desc Zelus.localize
             let typenv = Hashtbl.create argc in
             let local_env = { exp_env = ref []; var_env = Hashtbl.create 0}  in
             (List.iter (vc_gen_pattern ctx local_env (Some typenv)) p_list);
-            Hashtbl.iter (fun a b -> debug(Printf.sprintf "%s:%s;" a b)) typenv;
+            Hashtbl.iter (fun a b -> debug(Printf.sprintf "%s:%s;" a b.base_type)) typenv;
             (* implementation_list ff ctx e; *) 
             debug(Printf.sprintf "Argc: %d\n" argc);
             
@@ -1299,7 +1316,7 @@ let implementation ff ctx env (impl (*: Zelus.implementation_desc Zelus.localize
           if not isstream then (            
           (* add function input constraints to local environment *)
           (List.iter (vc_gen_pattern ctx local_env (Some typenv)) p_list);
-          Hashtbl.iter (fun a b -> debug(Printf.sprintf "%s:%s;" a b)) typenv;
+          Hashtbl.iter (fun a b -> debug(Printf.sprintf "%s:%s;" a b.base_type)) typenv;
           (* implementation_list ff ctx e; *)
 
 
@@ -1383,7 +1400,7 @@ let implementation ff ctx env (impl (*: Zelus.implementation_desc Zelus.localize
             (* add function input constraints to local environment *)
             debug(Printf.sprintf "--STREAM--\n");
             (List.iter (vc_gen_pattern ctx local_env (Some typenv)) p_list);
-            Hashtbl.iter (fun a b -> debug(Printf.sprintf "%s:%s;" a b)) typenv;
+            Hashtbl.iter (fun a b -> debug(Printf.sprintf "%s:%s;" a b.base_type)) typenv;
 
             (* create function constraint to be proven *)
             let return_var = build_return_var ctx local_env n istuple in 
@@ -1477,3 +1494,24 @@ let implementation_list ff (impl_list) (*: Zelus.implementation_desc Zelus.local
   if (!proof_error_count > 0) then (
   Printf.printf "\027[31m[WARNING]\027[0m Failed proof count : %d \n" !proof_error_count);
   impl_list
+
+
+(* the alpha substitution function*)
+let vc_gen_substitute (var : string) env ctx typenv = 
+  (*
+  var       ->   Variable to be substituted
+  ctx       ->   Z3 context variable
+  env       ->   Z3 local environment (reference of a list of Z3 vc_gen_expressions)
+  typenv    ->   typing environment ( Hash table of string = variable name * custom_t = type)
+  *)
+  match typenv with
+  | Some(tbl) -> 
+      let sub_phi = (Hashtbl.find tbl var).phi in
+      let sub_reference_variable = (Hashtbl.find tbl var).reference_variable in
+      let sub_basetype = (Hashtbl.find tbl var).base_type in
+      let arg1 = (vc_gen_expression ctx env sub_phi typenv) in
+      let arg2 = (create_z3_var_typed ctx env sub_reference_variable sub_basetype) in
+      let arg3 = (create_z3_var_typed ctx env var sub_basetype) in
+      Expr.substitute_one arg1 arg2 arg3
+  | None -> debug (Printf.sprintf "Something is wrong with typenv\n"); Integer.mk_numeral_s ctx "42"
+  

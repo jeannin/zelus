@@ -301,13 +301,13 @@ implementation:
   | TYPE tp = type_params id = IDENT td = localized(type_declaration_desc)
       { Etypedecl(id, tp, td) }
   | LET ide = ide EQUAL seq = seq_expression
-      { Econstdecl(ide, false, seq) }
+      { Printf.printf "Check 4 for TestUno\n"; Econstdecl(ide, false, seq) }
   | LET STATIC ide = ide EQUAL seq = seq_expression
-      { Econstdecl(ide, true, seq) }
+      { Printf.printf "Check 5 for TestUno\n"; Econstdecl(ide, true, seq) }
   (*added here*)
   (*refinement type definition*)
   | LET ide = ide COLON obj = ide LBRACE seq1 = seq_expression RBRACE EQUAL seq2 = seq_expression
-      { Erefinementdecl(ide, obj, seq1, seq2)}
+      { Printf.printf "Check LETREC_4 for TestUno\n"; Erefinementdecl(ide, obj, seq1, seq2)}
   | LET ide = ide fn = simple_pattern_list COLON obj = ide LBRACE seq1 = seq_expression RBRACE EQUAL seq2 = seq_expression
       { Printf.printf "Erefinementfundecl\n"; Erefinementfundecl(ide, { f_kind = A; f_atomic = false;
 			f_args = fn; f_body = seq2;
@@ -352,6 +352,9 @@ implementation:
 			f_body = make(Elet(r, eqs, seq))
 				 $startpos(seq) $endpos(eqs);
 			f_loc = localise $startpos(fn) $endpos(eqs) }) }
+  (* added "LET equation_list IN expression" pattern*)
+  (*| LET defs = equation_list IN e = seq_expression
+      { Printf.printf "Check 2 for TestUno\n"; Elet(false, defs, e) }*)
 ;
 
 %inline is_rec:
@@ -512,9 +515,12 @@ equation_desc:
     { EQforall
 	{ for_indexes = i; for_init = []; for_body = bo } }
   | p = pattern EQUAL e = seq_expression
-    { EQeq(p, e) }
+    { Printf.printf "Check LETREC3 for TestUno\n"; EQeq(p, e) }
+  /* | p = pattern COLON var_type = type_expression EQUAL e1 = seq_expression (*LBRACE e2 = seq_expression RBRACE*)
+    { Printf.printf "Check T16 for TestUno\n"; EQeqrefinement(p, e1, var_type) } */
+    /* { Printf.printf "Check T16 for TestUno\n"; EQeq(p, e1) } */
   | i = ide PLUSEQUAL e = seq_expression
-    { EQpluseq(i, e) }
+    { Printf.printf "Check LETREC7 for TestUno\n"; EQpluseq(i, e) }
   | PERIOD p = pattern EQUAL e = period_expression
     { EQeq(p, make (Eperiod(e)) $startpos(e) $endpos(e)) }
   (*added here*)
@@ -540,6 +546,7 @@ equation_desc:
       { EQemit(i, Some(e)) }
   | eq1 = equation BEFORE eq2 = equation
       { EQbefore [eq1; eq2] }
+  (*adding let rec with refinement type here*)
 ;
 
 opt_end:
@@ -598,7 +605,7 @@ index_desc:
      { Eoutput(i, o) }
   | i = ide IN e1 = simple_expression DOTDOT e2 = simple_expression
      { Eindex(i, e1, e2) }
-;
+;   
 
 
 /* states of an automaton in an equation*/
@@ -747,9 +754,9 @@ let_list:
 
 one_let:
   | LET eq = equation_list
-      { make (false, eq) $startpos $endpos }
+      { Printf.printf "Check 3 for TestUno\n"; make (false, eq) $startpos $endpos }
   | LET REC eq = equation_list
-      { make (true, eq) $startpos $endpos }
+      { Printf.printf "Check LETREC 2 for TestUno\n"; make (true, eq) $startpos $endpos }
 ;
 
 local_list:
@@ -854,12 +861,12 @@ simple_pattern:
   | LPAREN p = pattern RPAREN
       { p }
   | LPAREN p = pattern_comma_list RPAREN
-      { make (Etuplepat (List.rev p)) $startpos $endpos }
+      { Printf.printf "[CHECK] tuple in simple pattern\n"; make (Etuplepat (List.rev p)) $startpos $endpos }
   | LPAREN RPAREN
       { make (Econstpat(Evoid)) $startpos $endpos }
   | UNDERSCORE
       { make Ewildpat $startpos $endpos }
-  | LPAREN p = pattern COLON t = type_expression RPAREN
+  | p = pattern COLON t = type_expression
       { make (Etypeconstraintpat(p, t)) $startpos $endpos }
   | LBRACE p = pattern_label_list RBRACE
       { make (Erecordpat(p)) $startpos $endpos }
@@ -891,9 +898,9 @@ pattern_label :
 /* Expressions */
 seq_expression :
   | e = expression SEMI seq = seq_expression
-      { make (Eseq(e, seq)) $startpos $endpos }
+      { Printf.printf "Check seq_expression2 for TestUno\n"; make (Eseq(e, seq)) $startpos $endpos }
   | e = expression %prec prec_seq
-      { e }
+      { Printf.printf "Check seq_expression for TestUno\n"; e }
 ;
 
 simple_expression:
@@ -916,7 +923,7 @@ simple_expression_desc:
   | LAST i = ide
       { Printf.printf "Desc last\n"; Elast(i) }
   | a = atomic_constant
-      { Printf.printf "Desc const\n"; Econst a }
+      { Printf.printf "[CHECK] Desc const\n"; Econst a }
   | LBRACE l = label_expression_list RBRACE
       { Printf.printf "Desc record\n"; Erecord(l) }
   | LBRACE e = simple_expression WITH l = label_expression_list RBRACE
@@ -932,7 +939,7 @@ simple_expression_desc:
 //   | LPAREN e = expression_comma_list COLON tl = type_star_list BAR e_ref = seq_expression RPAREN
 //       { Printf.printf "Desc Refinement Pair\n"; Erefinementfunpair( List.rev e, make(Etypetuple(List.rev tl)) $startpos $endpos, e_ref) }
   | LPAREN e = seq_expression RPAREN
-      { Printf.printf "Desc seq expression\n"; e.desc }
+      { Printf.printf " Check for Desc seq expression\n"; e.desc }
   | LPAREN e = simple_expression COLON t = type_expression RPAREN
       { Printf.printf "Desc type constraint\n"; Etypeconstraint(e, t) }
   | e = simple_expression DOT i = ext_ident
@@ -1000,6 +1007,8 @@ expression_desc:
   (* support for refinement types *)
   | name_var = ide COLON basetype = ide LBRACE seq1 = seq_expression RBRACE 
       { Printf.printf "Refinement tuple\n"; Erefinementtype(name_var, basetype, seq1) }
+  /* | e1 = expression COLON basetype = ide LBRACE seq1 = seq_expression RBRACE 
+      { Printf.printf "Refinement tuple 2\n"; Erefinementtype(name_var, basetype, seq1) } */
   (*added here*)
   | R_MOVE e = expression
       { Eop(Emove, [e])}
@@ -1054,9 +1063,9 @@ expression_desc:
   | e1 = simple_expression DOT LPAREN e2 = expression RPAREN
       { Eop(Eaccess, [e1; e2]) }
   | LET defs = equation_list IN e = seq_expression
-      { Elet(false, defs, e) }
+      { Printf.printf "Check 1 for TestUno\n"; Elet(false, defs, e) }
   | LET REC defs = equation_list IN e = seq_expression
-      { Elet(true, defs, e) }
+      { Printf.printf "Check LETREC 1 for TestUno\n"; Elet(true, defs, e) }
   | PERIOD p = period_expression
       { Eperiod(p) }
   (*added here*)
@@ -1207,7 +1216,7 @@ type_expression:
   | t = simple_type
       { t }
   | tl = type_star_list
-      { Printf.printf "type star list\n"; make(Etypetuple(List.rev tl)) $startpos $endpos}
+      { Printf.printf "[CHECK] type star list\n"; make(Etypetuple(List.rev tl)) $startpos $endpos}
   (* functions with refinement pairs *)
   | tl = type_star_list BAR e = seq_expression
       { Printf.printf " function with refinement pair\n"; make(Erefinementpairfuntype(List.rev tl, e)) $startpos $endpos}
@@ -1233,7 +1242,7 @@ simple_type:
       { Printf.printf "simple type constr\n"; make (Etypeconstr(i, [t])) $startpos $endpos }
   (*simple refinement type*)
   | basetype = simple_type LBRACE seq = seq_expression RBRACE 
-      { Printf.printf "type refinement simple type\n"; make(Erefinement(basetype, seq)) $startpos $endpos}
+      { Printf.printf "[CHECK] type refinement simple type\n"; make(Erefinement(basetype, seq)) $startpos $endpos}
   (* refinement type specification for pairs *)
   | binding_var = ide COLON basetype = simple_type
       { Printf.printf "type refinement pair\n"; make(Erefinementpair(binding_var, basetype)) $startpos $endpos}
