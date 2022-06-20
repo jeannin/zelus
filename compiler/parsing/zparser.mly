@@ -873,6 +873,7 @@ simple_pattern:
       { make (Econstpat(Evoid)) $startpos $endpos }
   | UNDERSCORE
       { make Ewildpat $startpos $endpos }
+  | p = pattern COLON t = type_expression
   | LPAREN p = pattern COLON t = type_expression RPAREN
       { Printf.printf "simple_pattern: ( p:type_expression )\n";
           make (Etypeconstraintpat(p, t)) $startpos $endpos }
