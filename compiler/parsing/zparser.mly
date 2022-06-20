@@ -525,10 +525,6 @@ equation_desc:
 	{ for_indexes = i; for_init = []; for_body = bo } }
   | p = pattern EQUAL e = seq_expression
     { EQeq(p, e) }
-  (*support for refinement types*)
-  | p = pattern COLON t = type_expression EQUAL e = seq_expression
-    { Printf.printf "pattern: Refinement Equation\n"; 
-      EQrefineeq(p, t, e)}
   | i = ide PLUSEQUAL e = seq_expression
     { EQpluseq(i, e) }
   | PERIOD p = pattern EQUAL e = period_expression
