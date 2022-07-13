@@ -17,7 +17,8 @@ let hybrid exec()= (x, y, theta, d_left, d_right) where
  and der y = vy init -0.5
  and (transverse, angular) = (present (period (0.04)) -> ((robot_str("transverse_vel", 0.5);robot_str("angular_vel",0.5)); (0.0, 0.0)(*;
   (robot_get("transverse_vel"),robot_get("angular_vel"))*)) init (0.0, 0.0))
-  
+  and  (odometry_x, odometry_y )= (present (period (0.04)) -> ((robot_get("odometry_x"),robot_get("odometry_y"))) init (0.0, 0.0))
+  and  var = (present (period (0.04)) -> ((print_float odometry_x ); print_newline() ) init () )
   
 let hybrid main () =
   let rec (x,y,theta, dl, dr) = exec () in
