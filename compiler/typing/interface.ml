@@ -113,6 +113,7 @@ let rec free_of_type v ty =
      List.fold_left free_of_type v ty_list
   | Etypefunrefinement(k, n, ty_exp, ty_exp2, e) -> free_of_type (free_of_type v ty_exp) ty_exp2
   | Erefinementpair(n, ty_exp) ->  free_of_type v ty_exp
+  | Ecustom_refinement((n, ty), e) -> free_of_type v ty
 					
 (* checks that every type is defined *)
 (* and used with the correct arity *)
@@ -161,6 +162,7 @@ let typ_of_type_expression typ_vars typ =
     | Erefinementpairfuntype(ty_list, _) -> 
        Ztypes.product (List.map typrec ty_list)
     | Erefinementpair(n, ty_exp) ->  (typrec ty_exp)
+    | Ecustom_refinement((n, ty), e) -> (typrec ty)
   and size si =
     match si.desc with
     | Sconst(i) -> Deftypes.Tconst(i)
