@@ -884,7 +884,7 @@ simple_pattern:
       { make (Econstpat(Evoid)) $startpos $endpos }
   | UNDERSCORE
       { make Ewildpat $startpos $endpos }
-  | LPAREN p = pattern COLON t = type_expression RPAREN
+  | p = pattern COLON t = type_expression
       { Printf.printf "simple_pattern: ( p:type_expression )\n";
           make (Etypeconstraintpat(p, t)) $startpos $endpos }
   | LBRACE p = pattern_label_list RBRACE
