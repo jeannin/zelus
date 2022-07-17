@@ -51,7 +51,6 @@ and type_expression_desc =
     | Erefinementpairfuntype of type_expression list * exp
     | Erefinement of type_expression * exp
     | Erefinementpair of name * type_expression
-    | Ecustom_refinement of (name * type_expression) * exp
     (* | Erefinementtype of exp * exp * exp *)
 
 and size = size_desc localized
