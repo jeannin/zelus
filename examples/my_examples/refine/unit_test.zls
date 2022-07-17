@@ -132,3 +132,10 @@ let add103 (x : int{x > 0}) (y : int{y > 0}) : int{(add103_return > 0) && (add10
 let add104 (x:int) (y:int) : int =
   x + y
 
+(* 
+	EXAMPLE 11: parsing support for let rec declarations for streams with refinement types
+*)
+let node stream_refinement () =
+	let rec x : (int * int) {((fst(x) >= 0) && (snd(x) >= 0))} = (0,1) fby (snd(x), snd(x) + fst(x)) in 
+	let rec y : (int * int) {(fst(x) >= 0)} = (1,1) in
+	let rec (a, b) : (int * int) {((a >= 0) && (b >= 0))} = (0,1) fby (b, a+b) in b
