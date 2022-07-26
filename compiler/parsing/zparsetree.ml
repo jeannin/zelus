@@ -49,7 +49,7 @@ and type_expression_desc =
     | Etypefun of kind * string option * type_expression * type_expression
     | Etypefunrefinement of kind * string option * type_expression * type_expression * exp
     | Erefinementpairfuntype of type_expression list * exp
-    | Erefinement of type_expression * exp
+    | Erefinement of (name * type_expression) * exp
     | Erefinementpair of name * type_expression
     (* | Erefinementtype of exp * exp * exp *)
 
@@ -98,14 +98,16 @@ and implementation_desc =
     | Erefinementdecl of name * name * exp * exp * is_static
 
     | Efundecl of name * funexp
-    | Erefinementfundecl of name * funexp * exp
+    | Erefinementfundecl of name * funexp
 
 and funexp =
   { f_kind: kind;
     f_atomic: is_atomic;
     f_args: pattern list;
     f_body: exp;
-    f_loc: location }
+    f_loc: location;
+    f_retrefine: type_expression;
+    }
     
 and is_atomic = bool
 
