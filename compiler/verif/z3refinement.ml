@@ -111,6 +111,10 @@ let type_space =
     let type_table : ((string, custom_t) Hashtbl.t) = (Hashtbl.create 1)
     in ref type_table
 
+let type_alias_space =
+    let type_alias_table : ((string, custom_t) Hashtbl.t) = (Hashtbl.create 1)
+    in ref type_alias_table
+
 let erefinement2customt erefinement ctx env typenv =
   match erefinement.desc with
   | Erefinement(t,e) -> (
@@ -430,7 +434,7 @@ let create_z3_var_typed ctx ({exp_env = e ; var_env = v}) s basetype : expr =
       (* | "string" -> Printf.printf " I will make a string here\n"; (Expr.mk_const ctx (Symbol.mk_string ctx n.source) (.mk_sort ctx))
       | "char" -> Printf.printf " I will make a char here\n"; (Expr.mk_const ctx (Symbol.mk_string ctx n.source) (.mk_sort ctx))*)
       | "bool" -> debug(Printf.sprintf " I will make a bool here\n"); (Expr.mk_const ctx (Symbol.mk_string ctx s) (Boolean.mk_sort ctx))
-      | _ ->  debug (Printf.sprintf " I don't know what to make here\n"); Integer.mk_numeral_s ctx "42"
+      | _ -> (debug (Printf.sprintf " I don't know what to make here\n"); Integer.mk_numeral_s ctx "42")
     ) in
     Hashtbl.add v s new_var;
     debug (Printf.sprintf "New variable, returning %s\n\n" (Expr.to_string new_var));
@@ -524,7 +528,18 @@ let rec vc_gen_equation ctx env typenv eq =
        | Evarpat(n) -> debug (Printf.sprintf "Evarpat: %s\n" n.source); create_z3_var ctx env n.source
        | Etypeconstraintpat(p1,t) -> let var_name = 
           (match p1.p_desc with 
-          | Evarpat(n1) -> debug (Printf.sprintf "Etypeconstraintpat: %s\n" n1.source); add_constraint env (Boolean.mk_eq ctx body_exp (create_z3_var ctx env (n1.source))); n1.source
+          (* BUG HERE!!! CHANGE CREATE_Z3_VAR to TYPED VERSION!!!! *) (* FIXED *)
+          | Evarpat(n1) -> debug (Printf.sprintf "Etypeconstraintpat: %s\n" n1.source); add_constraint env (Boolean.mk_eq ctx body_exp (create_z3_var_typed ctx env (n1.source) (match t.desc with
+          | Erefinement(lbl, ref_exp) -> (match (snd(lbl)).desc with
+            | Etypeconstr(long_name, _) -> (match long_name with
+              | Name(s) -> s
+              | Modname(q) -> q.id)
+            | _ -> "basetype_not_right")
+          | Etypeconstr(long_name, _) -> (match long_name with
+            | Name(s) -> s
+            | Modname(q) -> q.id)
+          | _ -> "wrong_type_expression_basetype")
+          )); n1.source
           | _ -> debug (Printf.sprintf "Wrong pattern for variable in Etypeconstraintpat\n"); "undefined var_name") in
           let (base_type_1, ref_var) = match t.desc with
             | Erefinement(lbl, ref_exp) -> debug (Printf.sprintf "Basetype: %s\n" (match (snd(lbl)).desc with
@@ -553,6 +568,9 @@ let rec vc_gen_equation ctx env typenv eq =
                     | Name(s) -> s
                     | Modname(q) -> q.id)
                   | _ -> "basetype_not_right"), fst(lbl))
+            | Etypeconstr(long_name, _) -> debug (Printf.sprintf "Etypeconstr pattern in vc_gen_equation"); ((match long_name with
+              | Name(s) -> s
+              | Modname(q) -> q.id), "no_refinement")
             | _ -> debug (Printf.sprintf "Wrong type expression for variable in Etypeconstraintpat\n"); ("undefined base_type", "undefined ref_var") in
             create_z3_var_typed ctx env var_name base_type_1
        | _ -> debug (Printf.sprintf "undefined_var"); create_z3_var ctx env "undefined_var") in
@@ -1382,14 +1400,37 @@ let implementation ff ctx env (impl (*: Zelus.implementation_desc Zelus.localize
       (* Refinement type of the form: let n1:n2{e1} = e2 *)
       | Econstdecl(n1, ty_refine, is_static, e2) ->
       	 debug(Printf.sprintf "Erefinementdecl %s\n" n1);
-         add_constraint env (Boolean.mk_eq ctx (create_z3_var ctx env n1) (vc_gen_expression ctx env e2 None));
+         let base_type = (match ty_refine.desc with
+         | Erefinement(lbl, ref_exp) -> (match (snd(lbl)).desc with
+          | Etypeconstr(long_name, _) -> (match long_name with
+            | Name(s) -> s
+            | Modname(q) -> q.id)
+          | _ -> debug(Printf.sprintf "basetype_not_right\n"); "basetype_not_right")
+         | _ ->  debug(Printf.sprintf "undefined_basetype_Econstdecl\n"); "undefined_basetype_Econstdecl") in
+         (* let ct = erefinement2customt ty_refine ctx env None in
+         if (ct.reference_variable = "emptyalias") then
+            if (Hashtbl.mem !type_alias_space ct.base_type) then
+              let base_type = (Hashtbl.find !type_alias_space ct.base_type).base_type in *)
+         let alias_var = (erefinement2customt ty_refine ctx env None).base_type in
+         let var_expression = (match alias_var with 
+                            | alias_var_1 -> (if (Hashtbl.mem !type_alias_space alias_var_1) then 
+                                (debug (Printf.sprintf " Found in alias space\n"); create_z3_var_typed ctx env n1 (Hashtbl.find !type_alias_space alias_var_1).base_type)
+                            else 
+                                (debug (Printf.sprintf " Calling create_z3_var_typed\n"); create_z3_var_typed ctx env n1 base_type))) in
+         
+         (* DONE - replace create_z3_var with the typed version in the line below - DONE*)
+         add_constraint env (Boolean.mk_eq ctx (var_expression) (vc_gen_expression ctx env e2 None));
+         (* debug(Printf.sprintf "Basetype %s\n" base_type); *)
          (* z3_solve ctx env (vc_gen_expression ctx env e1 None); *)
          (* modified to be: calling z3_solve in vc_gen_typ_exp_desc 
           instead of in here *)
           (* add to Hash Table*)
           (* vc_gen_substitute *)
           let custom_type = erefinement2customt ty_refine ctx env None in
-          add_type n1 custom_type;
+          if (custom_type.reference_variable = "no_refinement") then
+            (add_type n1 (Hashtbl.find !type_alias_space (erefinement2customt ty_refine ctx env None).base_type);)
+          else
+            add_type n1 custom_type;
           print_env env; 
           let expr_subs = vc_gen_substitute n1 env ctx (Some(!type_space)) in
           (* z3_solve *)
@@ -1608,7 +1649,19 @@ let implementation ff ctx env (impl (*: Zelus.implementation_desc Zelus.localize
           in debug(Printf.sprintf "end\n")
           )
       | Eopen(n) -> debug(Printf.sprintf "Eopen %s\n" n)
-      | Etypedecl(n, params, tydecl) -> debug(Printf.sprintf "Etypedecl %s\n" n)
+      | Etypedecl(n, params, tydecl) -> debug(Printf.sprintf "Etypedecl %s\n" n);
+        (* implement here *)
+        match tydecl.desc with
+          | Ecustom_refinement_type(lbl, ref_exp) -> let basetype = (match (snd(lbl)).desc with
+            | Etypeconstr(long_name, _) -> (match long_name with
+              | Name(s) -> s
+              | Modname(q) -> q.id)
+            | _ -> "basetype_not_right") in
+            let ref_var = fst(lbl) in
+            Hashtbl.add (!type_alias_space) n {base_type = basetype; reference_variable = ref_var; phi = ref_exp};
+            debug(Printf.sprintf "Basetype: %s\n" basetype);
+            debug(Printf.sprintf "Reference Variable: %s\n" ref_var)
+          | _ -> debug(Printf.sprintf "Undefined type declaration\n")
 
 (* let f x:tx y:ty z:tz = e:te *)
 (* f has the type: tx -> ty -> tz -> te *)
