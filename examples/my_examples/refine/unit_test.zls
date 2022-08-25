@@ -84,6 +84,7 @@ let node main () =
 	- currently supported operator: box, diamond
 	- LTL operator can be connected by &&, ||
 *)
+
 let add7 (x : {v:int|v>0}) (y : {v:int|v>0}) : {v:int | box(v >= x) && diamond(v >= y)} =
   x + y 
 
@@ -94,6 +95,7 @@ let x : {v:int | box(v>=3) || box(v<2)} = 4
   EXAMPLE 8: custom refinement type
 
 *)
+
 type nat = {v : int | v >= 0}
 
 (* 
@@ -127,15 +129,22 @@ let add103 (x : {v:int | v > 0}) (y : {v:int | v > 0}) : {v:int | (v > 0) && (v 
   x + y 
 
 	(* - no refinement *)
-let add104 (x:int) (y:int) : int = x+y
+let add104 (x:int) (y:int) : int =
+  x + y
 let add105 (x:int) (y:int) = x+y
 let add106 (x:int) y = x+y
 let add107 x y = x+y
 
-
+(* 
+	EXAMPLE 11: parsing support for let rec declarations for streams with refinement types
+*)
+let node stream_refinement () =
+	let rec x : (int * int) {((fst(x) >= 0) && (snd(x) >= 0))} = (0,1) fby (snd(x), snd(x) + fst(x)) in 
+	let rec y : (int * int) {(fst(x) >= 0)} = (1,1) in
+	let rec (a, b) : (int * int) {((a >= 0) && (b >= 0))} = (0,1) fby (b, a+b) in b
 
 (* designed to be failed cases: 3 *)
 (* 
-	EXAMPLE 11: Refinement variable typing rule
+	EXAMPLE 12: Refinement variable typing rule
 *)
 let y6 : {v:float | v >= 0} = -1.2
