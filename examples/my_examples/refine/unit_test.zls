@@ -139,3 +139,10 @@ let add107 x y = x+y
 	EXAMPLE 11: Refinement variable typing rule
 *)
 let y6 : {v:float | v >= 0} = -1.2
+
+
+(* EXAMPLE 12: "let rec" equations *)
+(* the following can only be parsed but not verified, 
+		since we have not implemented new-syntax pairing rules *)
+let node main () =
+  let rec (a,b) : {v:int | v>1} = (1,2) in (a,b)
