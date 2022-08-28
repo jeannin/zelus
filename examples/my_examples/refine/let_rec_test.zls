@@ -7,4 +7,6 @@
 
 
 let node main () =
-  let rec (a,b) = (1,2) : (int*int) {a>0} in (a,b)
+  let rec (a,b) : {v:int | v>1} = (1,2) in (a,b)
+  (* only test the parsing *)
+  (* verification will fail due to type error *)
