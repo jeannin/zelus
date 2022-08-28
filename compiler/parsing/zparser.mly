@@ -320,11 +320,18 @@ implementation:
           
     (* non-refinement variable decl *)
   | LET ide = ide EQUAL seq = seq_expression
-  | LET ide = ide COLON ext_ident EQUAL seq = seq_expression
       { Printf.printf "Erefinementdecl\n";
           Econstdecl(ide,            
                { desc=Erefinement(
                     ("emptyalias", make (Etypeconstr(Name("emptytype"), [])) $startpos $endpos),
+                    {desc=Econst(Ebool(true));loc=localise $startpos(ide) $endpos(ide)}
+                );loc=localise $startpos(ide) $endpos(ide) },
+               false, seq) }  
+  | LET ide = ide COLON basetype = ext_ident EQUAL seq = seq_expression
+      { Printf.printf "Erefinementdecl\n";
+          Econstdecl(ide,            
+               { desc=Erefinement(
+                    ("no_refinement", make (Etypeconstr(basetype, [])) $startpos $endpos),
                     {desc=Econst(Ebool(true));loc=localise $startpos(ide) $endpos(ide)}
                 );loc=localise $startpos(ide) $endpos(ide) },
                false, seq) }        
