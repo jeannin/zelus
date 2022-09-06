@@ -1190,11 +1190,11 @@ and build_input_var ctx env e typenv istuple =
           [(vc_gen_expression ctx env (List.hd e_list) typenv) ; (vc_gen_expression ctx env (List.hd (List.tl e_list)) typenv) ]
       )
 
-and build_return_var ctx env n istuple =
+and build_return_var ctx env n basetype istuple =
       if not istuple then (
-      [create_z3_var ctx env (Printf.sprintf "%s_return" n)]
+      [create_z3_var_typed ctx env (Printf.sprintf "%s_return" n) basetype]
       ) else (
-      [create_z3_var ctx env (Printf.sprintf "%s_fst" n); create_z3_var ctx env (Printf.sprintf "%s_snd" n) ]
+      [create_z3_var_typed ctx env (Printf.sprintf "%s_fst" n) basetype; create_z3_var_typed ctx env (Printf.sprintf "%s_snd" n) basetype ]
       )
 
 and qualident t =
@@ -1502,7 +1502,7 @@ let implementation ff ctx env (impl (*: Zelus.implementation_desc Zelus.localize
           (add_constraint local_env expr;
           Printf.printf "Function body vc_gen_expression: %s\n" (Expr.to_string expr)); *)
           (* create function constraint to be proven *)
-          let return_var = build_return_var ctx local_env n istuple in
+          let return_var = build_return_var ctx local_env n ret_ref_var_typ istuple in
           let return_exp_1 = (vc_gen_expression ctx local_env rettype (Some typenv)) in
           let return_exp = Expr.substitute_one return_exp_1 (create_z3_var_typed ctx env rettype_ref_var ret_ref_var_typ) (hd return_var) in
           debug(Printf.sprintf "Return type vc_gen_expression: %s\n" (Expr.to_string return_exp));
@@ -1568,7 +1568,8 @@ let implementation ff ctx env (impl (*: Zelus.implementation_desc Zelus.localize
             Hashtbl.iter (fun a b -> debug(Printf.sprintf "%s:%s;" a b.base_type)) typenv;
 
             (* create function constraint to be proven *)
-            let return_var = build_return_var ctx local_env n istuple in 
+            (* TEMPORARY FIX. NEED TO GET BASETYPE OF STREAM AND PASS THAT TO BUILD_RETURN_VAR *)
+            let return_var = build_return_var ctx local_env n "float" istuple in
             let return_exp = (vc_gen_expression ctx local_env rettype (Some typenv)) in
             debug(Printf.sprintf "Return type vc_gen_expression: %s\n" (Expr.to_string return_exp));
             let function_argument_constraints = !(local_env.exp_env) in
