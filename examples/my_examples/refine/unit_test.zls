@@ -116,7 +116,7 @@ let add102 (x : int) (y : {v:int | v>0}) : int =
 
 	(* - only return type is refinement *)
 		(* True case: *)
-let f101 (x : int) (y : int) : {v:int | v > 0} =
+let f101 (x : int) (y : int) : {v:int | v >= 0} =
   x*x + y*y
 		(* False case: *)
 let f102 (x : int) (y : int) : {v:int | v > 0} =

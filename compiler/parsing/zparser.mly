@@ -315,13 +315,13 @@ implementation:
     (* refinement variable decl *)
   /* | LET ide = ide COLON obj = ide LBRACE seq1 = seq_expression RBRACE EQUAL seq2 = seq_expression */
   | LET ide = ide COLON ty_refine = type_expression EQUAL seq2 = seq_expression
-      { Printf.printf "Erefinementdecl\n";
+      { Printf.printf "refinement variable decl\n";
           Econstdecl(ide, ty_refine, false, seq2) }
           
     (* non-refinement variable decl *)
   | LET ide = ide EQUAL seq = seq_expression
   | LET ide = ide COLON ext_ident EQUAL seq = seq_expression
-      { Printf.printf "Erefinementdecl\n";
+      { Printf.printf "non-refinement variable decl\n";
           Econstdecl(ide,            
                { desc=Erefinement(
                     ("emptyalias", make (Etypeconstr(Name("emptytype"), [])) $startpos $endpos),
@@ -332,7 +332,7 @@ implementation:
     (* basic refinement function *)
   /* | LET ide = ide fn = simple_pattern_list COLON obj = ide LBRACE seq1 = seq_expression RBRACE EQUAL seq2 = seq_expression */
   | LET ide = ide fn = simple_pattern_list COLON retrefine=type_expression EQUAL seq2=seq_expression
-      { Printf.printf "Efundecl\n"; Efundecl(ide, { 
+      { Printf.printf "basic refinement function decl\n"; Efundecl(ide, { 
             f_kind = A; f_atomic = false;
             f_args = fn;
             f_body = seq2;
@@ -343,7 +343,7 @@ implementation:
     (* non-refinement function*)
   | LET ide = ide fn = simple_pattern_list EQUAL seq = seq_expression    
   | LET ide = ide fn = simple_pattern_list COLON ide EQUAL seq = seq_expression
-        { Printf.printf "Efundecl trivially true\n"; Efundecl(ide, { f_kind = A; f_atomic = false;
+        { Printf.printf "non-refinement function trivially true\n"; Efundecl(ide, { f_kind = A; f_atomic = false;
 			f_args = fn; f_body = seq;
 			f_loc = localise $startpos(fn) $endpos(seq);
             f_retrefine = {
