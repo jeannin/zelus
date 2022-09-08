@@ -1,0 +1,17 @@
+(*
+    Automatic Cruise Control used in FTSCS 2022
+*)
+let node exec () = 
+  let vfi = 1. in
+  let dt = 0.01 in
+  let b = 1. in
+  let xl = 5. in
+  let rec ((xf, vf, af) : 
+    {(x:float) * (v:float) * (a:float) | (x + (v**2.) /. (2.0*.b) < x_l) && 
+     (((x +. (v**2.) /. (2.0*.b) +. v *. dt) >= xl) && a = b) ||
+     (((x +. (v**2.) /. (2.0*.b) +. v *. dt) < xl) && a = 0)}) = 
+    (0., vfi, 0.) fby
+    (xf +. (vf *. dt),
+     vf +. (af *. dt),
+     (if (xf +. (vf ** 2.) /. (2.0*.b) +. vf *. dt) >= xl then b else 0.))
+    in (xf, vf, af)

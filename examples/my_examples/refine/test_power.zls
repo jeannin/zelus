@@ -1,0 +1,4 @@
+let node main () =
+    let (x : {v : float | v >= 0 || v < 0}) = -.5. in
+    let (x_abs : {v : float | v >= 0}) = x**2. 
+    in ()
