@@ -316,11 +316,20 @@ let print_assignments m =
     Print counterexamples found for a given z3 model
 *)
   let decls = (Model.get_decls m) in
-    List.iter (fun a -> (match (Model.get_const_interp m a) with
+    List.iter (fun a -> (
+      
+    let arity = FuncDecl.get_arity a in
+    if arity == 0 then ( (match (Model.get_const_interp m a) with
       | Some(e) -> Printf.printf "\t%s: %s\n" (Symbol.get_string (FuncDecl.get_name a)) 
           (if (Arithmetic.is_real e) then (Arithmetic.Real.to_decimal_string e 5) else (Expr.to_string e))
       | None -> ()
-    )) decls
+    )) else (
+      (match (Model.get_func_interp m a) with
+      | Some(e) -> Printf.printf "\t%s: %s\n" (Symbol.get_string (FuncDecl.get_name a)) 
+          (Model.FuncInterp.to_string e)
+      | None -> ()
+    )
+    ))) decls
 
 let build_z3_premise ctx ({exp_env = l; var_env = v}) =
 (*
@@ -420,7 +429,7 @@ let z3_proof ctx env vc constraints =
       		match m with 
           | None -> ()
 		      | Some (m) -> 
-	  	      (*Printf.printf "Model: \n%s\n" (Model.to_string m);*)
+	  	      Printf.printf "Model: \n%s\n" (Model.to_string m);
             print_assignments m;
       let err_msg = Printf.sprintf "Could not prove: %s\n\027[0m" (Expr.to_string constraints) in
       proof_error_count := !proof_error_count + 1;
@@ -805,8 +814,10 @@ and vc_gen_equation ctx env typenv eq =
                                 (Printf.printf "("); (ignore (List.map (fun x -> (Printf.printf "%s," (Expr.to_string x) )) e2_exps)); (Printf.printf ")\n");
                                 (* Parses phi into a Z3 expression *)
                                 let ref_constraint = (vc_gen_expression ctx env ref_exp typenv) in
+                                debug(Printf.sprintf "ref_constraint: %s\n" (Expr.to_string ref_constraint));
                                 (* Gets phi[x/v] *)
                                 let ref_replaced_constraint = Expr.substitute ref_constraint z3vars_ref z3vars in
+                                debug(Printf.sprintf "ref_replaced_constraint: %s\n" (Expr.to_string ref_replaced_constraint));
                                 (* Gets "next step" variables, or those associated with e2 *)
                                 (*let next_step_vars = List.map2 (fun x ty -> (create_z3_var_typed ctx env (Printf.sprintf "%s_next" x) ty)) vars_names vars_basetypes_strings in*)
                                 (*
@@ -828,8 +839,10 @@ and vc_gen_equation ctx env typenv eq =
                                 debug(Printf.sprintf "phi_e2: %s\n" (Expr.to_string phi_e2));
                                 (* vc1 === phi[x/v] => phi[e1 / v] *)
                                 let vc1 = Boolean.mk_implies ctx ref_replaced_constraint phi_e1 in
+                                debug(Printf.sprintf "vc1: %s\n" (Expr.to_string vc1));
                                 (* vc2 === phi[x/v] => phi[e2 / v] *)
                                 let vc2 = Boolean.mk_implies ctx ref_replaced_constraint phi_e2 in
+                                debug(Printf.sprintf "vc2: %s\n" (Expr.to_string vc2));
                                 (* Tries to disprove the VCs then adds them to the environment if no counterexample found *)
                                 z3_proof ctx env (Boolean.mk_not ctx vc1) vc1;
                                 z3_proof ctx env (Boolean.mk_not ctx vc2) vc2;
@@ -1137,7 +1150,7 @@ and vc_gen_operator ctx env typenv e e_list =
     | "*." | "*" | "Stdlib.*." -> Arithmetic.mk_mul ctx [(vc_gen_expression ctx env op_l typenv); (vc_gen_expression ctx env op_r typenv)]
     | "+." | "+" | "Stdlib.+." -> Arithmetic.mk_add ctx [(vc_gen_expression ctx env op_l typenv); (vc_gen_expression ctx env op_r typenv)]
     | "-." | "-" | "Stdlib.-." -> Arithmetic.mk_sub ctx [(vc_gen_expression ctx env op_l typenv); (vc_gen_expression ctx env op_r typenv)]
-    | "/." | "/" -> Arithmetic.mk_div ctx (vc_gen_expression ctx env op_l typenv) (vc_gen_expression ctx env op_r typenv)
+    | "/." | "/" | "Stdlib./." -> Arithmetic.mk_div ctx (vc_gen_expression ctx env op_l typenv) (vc_gen_expression ctx env op_r typenv)
     | "**" -> Arithmetic.mk_power ctx (vc_gen_expression ctx env op_l typenv) (vc_gen_expression ctx env op_r typenv)
     | "&&" -> Boolean.mk_and ctx [(vc_gen_expression ctx env op_l typenv); (vc_gen_expression ctx env op_r typenv)]
     | "||" -> Boolean.mk_or ctx [(vc_gen_expression ctx env op_l typenv); (vc_gen_expression ctx env op_r typenv)]
