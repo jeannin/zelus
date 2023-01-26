@@ -1209,9 +1209,9 @@ expression_desc:
   | e1 = simple_expression DOT LPAREN e2 = expression RPAREN
       { Eop(Eaccess, [e1; e2]) }
   | LET defs = equation_list IN e = seq_expression
-      { Printf.printf "Let with list of equations\n"; Elet(false, defs, e) }
+      { Elet(false, defs, e) }
   | LET REC defs = equation_list IN e = seq_expression
-      { Printf.printf "Let Rec with list of equations\n"; Elet(true, defs, e) }
+      { Elet(true, defs, e) }
   | PERIOD p = period_expression
       { Eperiod(p) }
   (*added here*)
