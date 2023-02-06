@@ -6,3 +6,4 @@ let node sim () =
 	(*let (x:{v:float | v >= 0}) =  5. in x*)
 	(*let rec (x:{v:float | v > 0.}) = (-5.) in x*)
 	(*let rec ((x, y):{v:(int*int) | true}) = (5, 7) in (x, y);; (* this type checks *)*)
+o

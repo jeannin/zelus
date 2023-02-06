@@ -1,0 +1,7 @@
+let node main () =
+  let rec ((x, y):
+    {(v:int)*(w:int) | v >= 0 && w >= 0}) = 
+      ((0, 0) fby 
+      ((if (x > 5) then 0 else (x + 1)), 
+        2*x)) 
+    in (x,y)
