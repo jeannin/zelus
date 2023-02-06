@@ -1,0 +1,13 @@
+(* Attempts to prove (among other things) ((x > 0.) && (y > x)) => x > x which is obviously false.
+
+This test should FAIL
+
+Expected VCs are:
+* ((x > 0.) && (y > x)) => ((1. > 0.) && (x > 0.))
+* ((x > 1.) && (y > x)) => (x > x) ***FALSE***
+
+*)
+let node exec () = 
+	let rec (x:{v:float | v > 0.}) = 1. fby x
+		and (y:{v:float | v > x}) = x
+		in ()
