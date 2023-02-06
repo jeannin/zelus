@@ -1,0 +1,12 @@
+(* Tests parallel streams with a basic example. Proves that for an increasing stream starting at 1.1, the square of its value is always larger than itself.
+
+This test should PASS 
+
+Expected VCs are:
+* ((x > 1.) && (y > x)) => ((1.1 > 1.) && ((x +. 1.) > 1.))
+* ((x > 1.) && (y > x)) => ((x *. x) > x)
+*)
+let node exec () = 
+	let rec (x:{v:float | v > 1.}) = 1.1 fby (x +. 1.)
+		and (y:{v:float | v > x}) = x *. x
+		in ()
