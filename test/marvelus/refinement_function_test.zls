@@ -1,0 +1,100 @@
+(* Unit tests for refinement functions *)
+
+(*
+	TEST 1: refinement function declaration
+
+	- multiple refinement inputs
+	- two function body expressions
+*)
+let f1 (a : {v:int|v > 0}) (b : {v:int|v >= 0}) (c : {v:int|v > 0}) : {v:int|v > 0}  =  
+	   let y = a + b in
+	   y
+
+
+(*
+	TEST 2: refinement functions as a math proof
+
+	- prove that the square of any negative number is a positive number
+*)
+let f2 (x : {v:int| v <= 0 }) : {v:int| v >= 0 } =
+         let y = x * x in
+		 y
+
+(*
+	TEST 3:
+
+	- same as above but as a direct expression
+*)
+let f3 (x : {v:int|v>0}) : {v:int|v>0} = x*x
+
+(*
+	TEST 4: refinement function with multiple constraints in return type
+
+	- constraint on function inputs
+	- logical operator on return type to concatenate constraints
+*)
+let add (x : {v:int|v>0} ) (y : {v:int|v>0} ) : { v:int | v >= x && v >= y} =
+		let z = x + y 
+		in z 
+
+(*
+	TEST 5: refinement function with multiple body lines
+
+	- multiple body lines
+*)
+let f5 (a : {x:int|x>0}) (b : {x:int|x>0}) (c : {x:int|x>0}) : {x : int | x >= 0}  =  
+	   let z = a + b in
+	   let w = b + c in
+	   let y = w + z in
+	   y
+
+(*
+	TEST 6: nested functions
+
+    - verify function declaration
+    - check if input argument to existing function satisfy constraints
+*)
+let f6 (x : {x:int | x < 0 }) : {x : int | x > 0} = 
+	let y = x * x in 
+	add y y
+
+(*
+    TEST 7: function call check
+
+    - verify input arguments meet specifications
+    - pass in the first case
+    - fail for add -1 0, since ~(-1 > 0)
+*)
+
+let node main () =
+	print_int (add (4) (3));
+	(add (-1) 0)
+
+(* 
+	TEST 8: optionally make function input and output type to be refinement 
+*)
+
+(* - only one input is refinement *)
+let add101 (x : {v:int | v>0}) (y : int) : int =
+  x + y 
+let add102 (x : int) (y : {v:int | v>0}) : int =
+  x + y 
+
+(* - only return type is refinement *)
+
+(* True case: *)
+let f101 (x : int) (y : int) : {v:int | v > 0} =
+  x*x + y*y
+(* False case: *)
+let f102 (x : int) (y : int) : {v:int | v > 0} =
+x + y 
+
+(* - both input and output type is refinement *)
+let add103 (x : {v:int | v > 0}) (y : {v:int | v > 0}) : {v:int | (v > 0) && (v = x+y)} =
+  x + y 
+
+(* - no refinement *)
+let add104 (x:int) (y:int) : int = x+y
+let add105 (x:int) (y:int) = x+y
+let add106 (x:int) y = x+y
+let add107 x y = x+y
