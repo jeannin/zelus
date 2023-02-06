@@ -1,9 +1,17 @@
 
 
+(* let y1 : {v:float | v >= 0} = -1.2 *)
+(* let y2 : {v:int | v < 0} = -1 *)
 
+(* let add103 (x : {vx:int | vx > 0}) (y : {vy:int | vy > 0}) (z:{vz:int|vz>0}) : {v:int | (v > 0) && (v = x+y)} = 
+  x + y  *)
 
+(* let f102 (x : {vx:int | vx > 0}) (y : int) : {v:int | v > 0} =
+  x + y  *)
+(* let f102 (x : {vx:int | vx > 0}) (y : {vx:int | vx>0}) : int =
+  x + y    *)
 
-let add1 (x : int{x > 0}) (y : int) : int{add1_return > 0} = x * x
+(* let add1 (x : int{x > 0}) (y : int) : int{add1_return > 0} = x * x
 
 let add2 (x: int{x>0}) (y:int) : int{add2_return>0} = x+y
 
@@ -17,4 +25,22 @@ let add6 (x: int) (y:int) : int = x+y
 
 let add7 (x:int{x>0}) y = x+y
 
-let add8 (x:int) y = x+y
+let add8 (x:int) y = x+y *)
+
+let add101 (x : {v:int | v>0}) (y : int) : int = x + y 
+let add102 (x : int) (y : {v:int | v>0}) : int = x + y 
+
+(* - only return type is refinement *)
+(* True case: *)
+let f101 (x : int) (y : int) : {v:int | v >= 0} = x*x + y*y
+(* False case: *)
+let f102 (x : int) (y : int) : {v:int | v > 0} = x + y 
+
+(* - both input and output type is refinement *)
+let add103 (x : {v:int | v > 0}) (y : {v:int | v > 0}) : {v:int | (v > 0) && (v = x+y)} = x + y 
+
+(* - no refinement *)
+let add104 (x:int) (y:int) : int = x+y
+let add105 (x:int) (y:int) = x+y
+let add106 (x:int) y = x+y
+let add107 x y = x+y   
