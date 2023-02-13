@@ -1,7 +1,7 @@
 echo Running MARVeLus CI/CD
 ./configure
-dune build
-dune install
+opam exec -- dune build --root .
+opam exec -- dune install --root .
 cd ./test/marvelus
 STR=$(make 2>&1)
 SUB='Error'
