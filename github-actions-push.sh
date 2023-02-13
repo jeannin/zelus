@@ -1,4 +1,7 @@
 echo Running MARVeLus CI/CD
+./configure
+dune build
+dune install
 cd ./test/marvelus
 STR=$(make 2>&1)
 SUB='Error'
