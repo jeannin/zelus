@@ -1,0 +1,49 @@
+name: MARVeLus
+
+on:
+   -push
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        solver:
+          - sundials
+          - nosundials
+        plot:
+          - gtk
+          - nogtk
+        ocaml-version:
+          - 4.13.1
+          - 4.08.1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use OCaml ${{ matrix.ocaml-version }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-version }}
+        
+      - name: Install OCaml dependencies
+        run: opam install -y graphics ocamlfind menhir
+
+      - name: Install Sundials
+        if: matrix.solver == 'sundials'
+        run: opam depext conf-sundials
+
+      - name: Install Sundials/ML
+        if: matrix.solver == 'sundials'
+        run: opam install sundialsml
+      
+      - name: Build MARVeLus
+        run: |
+          ./configure
+          opam exec -- dune build --root .
+          opam exec -- dune install --root .
+          chmod 775 ./github-actions-push.sh
+          ./github-actions-push.sh
+
