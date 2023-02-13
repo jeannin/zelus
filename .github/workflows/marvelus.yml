@@ -39,6 +39,9 @@ jobs:
         if: matrix.solver == 'sundials'
         run: opam install sundialsml
       
+      - name: Install Z3
+        run: pavpanchekha/setup-z3
+      
       - name: Build MARVeLus
         run: |
           chmod 775 ./github-actions-push.sh
