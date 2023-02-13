@@ -1,3 +1,0 @@
-let node min_max x = (min, max) where
-  rec min = x -> if x < pre min then x else pre min
-  and max = x -> if x > pre max then x else pre max

@@ -1,8 +1,0 @@
-struct robot_store_t
-{
-    int64_t utime;
- 
-    string command;  // command identification
-    float value;     // units defined by command
-   
-}
