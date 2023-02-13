@@ -312,8 +312,7 @@ implementation:
   | OPEN c = CONSTRUCTOR
       { Eopen c }
   | TYPE tp = type_params id = IDENT td = localized(type_declaration_desc)
-      { Printf.printf "implementation: type declaration: type %s = ...\n" id; 
-      Etypedecl(id, tp, td) }
+      { Etypedecl(id, tp, td) }
 
   | LET STATIC ide = ide EQUAL seq = seq_expression
       { Econstdecl(ide,                            
@@ -326,8 +325,7 @@ implementation:
     (* refinement variable decl *)
   /* | LET ide = ide COLON obj = ide LBRACE seq1 = seq_expression RBRACE EQUAL seq2 = seq_expression */
   | LET ide = ide COLON ty_refine = type_expression EQUAL seq2 = seq_expression
-      { Printf.printf "Erefinementdecl\n";
-          Econstdecl(ide, ty_refine, false, seq2) }
+      { Econstdecl(ide, ty_refine, false, seq2) }
           
     (*added here, varable annotation using ip and op keywords*)
   | LET ide = ide LBRACE OP seq1= expression RBRACE EQUAL seq2= seq_expression
@@ -338,8 +336,7 @@ implementation:
     (* non-refinement variable decl *)
   | LET ide = ide EQUAL seq = seq_expression
   | LET ide = ide COLON ext_ident EQUAL seq = seq_expression
-      { Printf.printf "Erefinementdecl\n";
-          Econstdecl(ide,            
+      { Econstdecl(ide,            
                { desc=Erefinement(
                     ("emptyalias", make (Etypeconstr(Name("emptytype"), [])) $startpos $endpos),
                     {desc=Econst(Ebool(true));loc=localise $startpos(ide) $endpos(ide)}
@@ -349,7 +346,7 @@ implementation:
     (* basic refinement function *)
   /* | LET ide = ide fn = simple_pattern_list COLON obj = ide LBRACE seq1 = seq_expression RBRACE EQUAL seq2 = seq_expression */
   | LET ide = ide fn = simple_pattern_list COLON retrefine=type_expression EQUAL seq2=seq_expression
-      { Printf.printf "Efundecl\n"; Efundecl(ide, { 
+      { Efundecl(ide, { 
             f_kind = A; f_atomic = false;
             f_args = fn;
             f_body = seq2;
@@ -360,7 +357,7 @@ implementation:
     (* non-refinement function*)
   | LET ide = ide fn = simple_pattern_list EQUAL seq = seq_expression    
   | LET ide = ide fn = simple_pattern_list COLON ide EQUAL seq = seq_expression
-        { Printf.printf "Efundecl trivially true\n"; Efundecl(ide, { f_kind = A; f_atomic = false;
+        { Efundecl(ide, { f_kind = A; f_atomic = false;
 			f_args = fn; f_body = seq;
 			f_loc = localise $startpos(fn) $endpos(seq);
             f_retrefine = {
@@ -373,7 +370,7 @@ implementation:
   (* refinement function with WHERE *)
   | LET ide = ide fn = simple_pattern_list COLON retrefine=type_expression EQUAL
 	seq = seq_expression WHERE r = is_rec eqs = equation_list
-        { Printf.printf "refinement function with WHERE\n"; Efundecl(ide, { f_kind = A; f_atomic = false; 
+        { Efundecl(ide, { f_kind = A; f_atomic = false; 
             f_args = fn; f_body = make(Elet(r, eqs, seq)) $startpos(seq) $endpos(eqs);
 		    f_loc = localise $startpos(fn) $endpos(eqs);
             f_retrefine = retrefine }) 
@@ -382,7 +379,7 @@ implementation:
   (* non-refinement function with WHERE *)
   | LET ide = ide fn = simple_pattern_list EQUAL seq = seq_expression WHERE r = is_rec eqs = equation_list
   | LET ide = ide fn = simple_pattern_list COLON ide EQUAL seq = seq_expression WHERE r = is_rec eqs = equation_list
-        { Printf.printf "non-refinement function with WHERE\n"; Efundecl(ide, { f_kind = A; f_atomic = false; f_args = fn;
+        { Efundecl(ide, { f_kind = A; f_atomic = false; f_args = fn;
 			f_body = make(Elet(r, eqs, seq))
 				 $startpos(seq) $endpos(eqs);
 		       f_loc = localise $startpos(fn) $endpos(eqs);
@@ -395,16 +392,14 @@ implementation:
         }
   (* kinded refinement function *)
   | is_let a = is_atomic k = kind ide = ide fn = simple_pattern_list COLON retrefine=type_expression EQUAL seq2 = seq_expression
-        { Printf.printf "Kinded refinement function\n"; 
-            Efundecl(ide, { f_kind = k; f_atomic = a; f_args = fn; f_body = seq2;
+        { Efundecl(ide, { f_kind = k; f_atomic = a; f_args = fn; f_body = seq2;
                                     f_loc = localise $startpos(fn) $endpos(fn);
                                     f_retrefine = retrefine} )
         }
   (* kind refinement function with where*)
   | is_let a = is_atomic k = kind ide = ide fn = simple_pattern_list COLON retrefine=type_expression EQUAL 
     seq = seq_expression WHERE r = is_rec eqs = equation_list
-      { Printf.printf "Kinded refinement function with WHERE\n"; 
-        Efundecl(ide, { f_kind = k; f_atomic = a; f_args = fn; f_body = make(Elet(r, eqs, seq)) $startpos(seq) $endpos(eqs);
+      { Efundecl(ide, { f_kind = k; f_atomic = a; f_args = fn; f_body = make(Elet(r, eqs, seq)) $startpos(seq) $endpos(eqs);
 			                      f_loc = localise $startpos(fn) $endpos(eqs);
                                   f_retrefine = retrefine }) }
 
@@ -413,8 +408,7 @@ implementation:
   /* -> Now the verification is handled in Efundecl, see z3refinement.ml */
   (* kinded non-refinement function *)
   | is_let a = is_atomic k = kind ide = ide fn = simple_pattern_list EQUAL seq = seq_expression
-        { Printf.printf "Kinded non-refinement function\n"; 
-            Efundecl(ide,
+        { Efundecl(ide,
             { f_kind = k; f_atomic = a; f_args = fn; f_body = seq;
             f_loc = localise $startpos(fn) $endpos(seq);
             f_retrefine = {
@@ -429,8 +423,7 @@ implementation:
   | is_let a = is_atomic k = kind ide = ide
 	  fn = simple_pattern_list EQUAL seq = seq_expression
           WHERE r = is_rec eqs = equation_list
-        { Printf.printf "Kinded non-refinement function with WHERE\n";
-            Efundecl(ide, { f_kind = k; f_atomic = a; f_args = fn;
+        { Efundecl(ide, { f_kind = k; f_atomic = a; f_args = fn;
 			f_body = make(Elet(r, eqs, seq))
 				 $startpos(seq) $endpos(eqs);
 			f_loc = localise $startpos(fn) $endpos(eqs);
@@ -477,8 +470,7 @@ interface:
   | OPEN c = CONSTRUCTOR
       { Einter_open(c) }
   | TYPE tp = type_params i = IDENT td = localized(type_declaration_desc)
-      { Printf.printf "interface: type declaration\n";
-          Einter_typedecl(i, tp, td) }
+      { Einter_typedecl(i, tp, td) }
   | VAL i = ide COLON t = type_expression
       { Einter_constdecl(i, t) }
 ;
@@ -495,8 +487,7 @@ scalar_interface :
   | OPEN c = CONSTRUCTOR
       { [make (Einter_open(c)) $startpos $endpos] }
   | TYPE tp = type_params i = IDENT td = localized(type_declaration_desc)
-      { Printf.printf "scalar_interface: type declaration\n";
-          [make (Einter_typedecl(i, tp, td)) $startpos $endpos] }
+      { [make (Einter_typedecl(i, tp, td)) $startpos $endpos] }
   | VAL i = ide COLON t = type_expression
       { [make (Einter_constdecl(i, t)) $startpos $endpos] }
   | EXTERNAL i = ide COLON t = type_expression EQUAL list_no_sep_of(STRING)
@@ -509,18 +500,15 @@ scalar_interface :
 
 type_declaration_desc:
   | /* empty */
-      { Printf.printf "type_declaration_desc: Eabstract_type\n";
-          Eabstract_type }
+      { Eabstract_type }
   | EQUAL l = list_of(BAR, localized(constr_decl_desc))
       { Evariant_type (l) }
   | EQUAL BAR l = list_of(BAR, localized(constr_decl_desc))
       { Evariant_type (l) }
   | EQUAL LBRACE s = label_list(label_type) RBRACE
-      { Printf.printf "type_declaration_desc: Erecord_type\n";
-          Erecord_type (s) }
+      { Erecord_type (s) }
   | EQUAL LBRACE label_type = label_type BAR seq = seq_expression RBRACE
-      { Printf.printf "type_declaration_desc: Ecustom_refinement_type\n";
-          Ecustom_refinement_type (label_type, seq) }
+      { Ecustom_refinement_type (label_type, seq) }
   | EQUAL t = type_expression
       { Eabbrev(t) }
 ;
@@ -545,8 +533,7 @@ label_list(X):
 
 label_type:
   | i = IDENT COLON t = type_expression
-  { Printf.printf "label_type: %s:type_expression\n" i;
-      (i, t) }
+  { (i, t) }
   | LPAREN t=label_type RPAREN { t }
 ;
 
@@ -963,20 +950,17 @@ simple_pattern:
   | c = constructor
       { make (Econstr0pat(c)) $startpos $endpos }
   | i = ide
-      { Printf.printf "simple_pattern: ide\n";
-          make (Evarpat i) $startpos $endpos }
+      { make (Evarpat i) $startpos $endpos }
   | LPAREN p = pattern RPAREN
       { p }
   | LPAREN p = pattern_comma_list RPAREN
-      { Printf.printf "simple_pattern: LPAREN pattern_comma_list RPAREN\n";
-          make (Etuplepat (List.rev p)) $startpos $endpos }
+      { make (Etuplepat (List.rev p)) $startpos $endpos }
   | LPAREN RPAREN
       { make (Econstpat(Evoid)) $startpos $endpos }
   | UNDERSCORE
       { make Ewildpat $startpos $endpos }
   | LPAREN p = pattern COLON t = type_expression RPAREN
-      { Printf.printf "simple_pattern: ( p:type_expression )\n";
-          make (Etypeconstraintpat(p, t)) $startpos $endpos }
+      { make (Etypeconstraintpat(p, t)) $startpos $endpos }
   | LBRACE p = pattern_label_list RBRACE
       { make (Erecordpat(p)) $startpos $endpos }
 ;
@@ -1019,28 +1003,28 @@ simple_expression:
 
 simple_expression_desc:
   | c = constructor
-      { Printf.printf "Desc constr0\n"; Econstr0(c) }
+      { Econstr0(c) }
   (* support for refinement types *)
   | name_var = ide COLON basetype = ide LBRACE seq1 = seq_expression RBRACE 
-      { Printf.printf "Refinement tuple\n"; Erefinementtype(name_var, basetype, seq1) }
+      { Erefinementtype(name_var, basetype, seq1) }
   | i = ext_ident
-      { Printf.printf "Desc var\n"; Evar i }
+      { Evar i }
   | LBRACKET RBRACKET
-      { Printf.printf "Desc nil_desc\n"; nil_desc }
+      { nil_desc }
   | LBRACKET l = list_of(SEMI, expression) RBRACKET
-      { Printf.printf "Desc cons_list_desc\n"; cons_list_desc l ($startpos($1)) ($endpos($3)) }
+      { cons_list_desc l ($startpos($1)) ($endpos($3)) }
   | LAST i = ide
-      { Printf.printf "Desc last\n"; Elast(i) }
+      { Elast(i) }
   | a = atomic_constant
-      { Printf.printf "Desc const\n"; Econst a }
+      { Econst a }
   | LBRACE l = label_expression_list RBRACE
-      { Printf.printf "Desc record\n"; Erecord(l) }
+      { Erecord(l) }
   | LBRACE e = simple_expression WITH l = label_expression_list RBRACE
-      { Printf.printf "Desc record with\n"; Erecord_with(e, l) }
+      { Erecord_with(e, l) }
   | LPAREN RPAREN
-      { Printf.printf "Desc void\n"; Econst Evoid }
+      { Econst Evoid }
   | LPAREN e = expression_comma_list RPAREN
-      { Printf.printf "Desc Tuple\n"; Etuple (List.rev e) }
+      { Etuple (List.rev e) }
 
 (*
   (* refinement tuples *)
@@ -1051,16 +1035,16 @@ simple_expression_desc:
 //       { Printf.printf "Desc Refinement Pair\n"; Erefinementfunpair( List.rev e, make(Etypetuple(List.rev tl)) $startpos $endpos, e_ref) }
 *)
   | LPAREN e = seq_expression RPAREN
-      { Printf.printf "Desc seq expression\n"; e.desc }
+      { e.desc }
   | LPAREN e = simple_expression COLON t = type_expression RPAREN
-      { Printf.printf "Desc type constraint\n"; Etypeconstraint(e, t) }
+      { Etypeconstraint(e, t) }
   | e = simple_expression DOT i = ext_ident
-      { Printf.printf "Desc record access\n"; Erecord_access(e, i) }
+      { Erecord_access(e, i) }
   | LBRACKETBAR e1 = simple_expression BAR e2 = simple_expression RBRACKETBAR
-      { Printf.printf "Desc concat\n"; Eop(Econcat, [e1; e2]) }
+      { Eop(Econcat, [e1; e2]) }
   | LBRACKETBAR e1 = simple_expression WITH i = simple_expression
 					     EQUAL e2 = expression RBRACKETBAR
-      { Printf.printf "Desc update\n"; Eop(Eupdate, [e1; i; e2]) }
+      { Eop(Eupdate, [e1; i; e2]) }
 ;
 
 simple_expression_list:
@@ -1092,9 +1076,9 @@ expression:
 
 expression_desc:
   | e = simple_expression_desc
-      { Printf.printf "Simple expression\n"; e }
+      { e }
   | e = expression_comma_list %prec prec_list
-      { Printf.printf "Tuple\n"; Etuple(List.rev e) }
+      { Etuple(List.rev e) }
   | e1 = simple_expression COLONCOLON e2 = expression
       { cons_desc e1 e2 ($startpos(e1)) ($endpos(e2)) }
   | e1 = expression FBY e2 = expression
@@ -1118,7 +1102,7 @@ expression_desc:
       { Eop(Eup, [e]) }
   (* support for refinement types *)
   | name_var = ide COLON basetype = ide LBRACE seq1 = seq_expression RBRACE 
-      { Printf.printf "Refinement tuple\n"; Erefinementtype(name_var, basetype, seq1) }
+      { Erefinementtype(name_var, basetype, seq1) }
   (*added here*)
   | R_MOVE e = expression
       { Eop(Emove, [e])}
@@ -1151,7 +1135,7 @@ expression_desc:
   | MINUS e = expression  %prec prec_uminus
       { unary_minus "-" e ($startpos($1)) ($endpos($1)) }
 
-  |  { Printf.printf "expression_desc: Econst(Ebool(true))\n"; Econst(Ebool(true))}
+  |  { Econst(Ebool(true))}
   /* | empty { Printf.printf "expression_desc: void\n"; Econst(Evoid)} */
 
 
@@ -1168,8 +1152,7 @@ expression_desc:
   | e1 = expression i = INFIX1 e2 = expression
       { binop i e1 e2 ($startpos(i)) ($endpos(i)) }
   | e1 = expression i = INFIX0 e2 = expression
-      { Printf.printf "expression: INFIX0: e1 %s e2\n" i;
-          binop i e1 e2 ($startpos(i)) ($endpos(i)) }
+      { binop i e1 e2 ($startpos(i)) ($endpos(i)) }
   | e1 = expression EQUAL e2 = expression
       { binop "=" e1 e2 ($startpos($2)) ($endpos($2)) }
   | e1 = expression OR e2 = expression
@@ -1183,13 +1166,11 @@ expression_desc:
   | e1 = expression s = SUBTRACTIVE e2 = expression
       { binop s e1 e2 ($startpos(s)) ($endpos(s)) }
   | e1 = expression AMPERAMPER e2 = expression
-      { Printf.printf "expression_desc: e1 && e2\n";
-          binop "&&" e1 e2 ($startpos($2)) ($endpos($2)) }
+      { binop "&&" e1 e2 ($startpos($2)) ($endpos($2)) }
   | e1 = expression BARBAR e2 = expression
       { binop "||" e1 e2 ($startpos($2)) ($endpos($2)) }
   | p = PREFIX e = expression
-      { Printf.printf "expression_desc: PREFIX: %s e\n" p;
-          unop p e ($startpos(p)) ($endpos(p)) }
+      { unop p e ($startpos(p)) ($endpos(p)) }
 
     (* add box and diamond *)
   /* | b = BOX LPAREN e = expression RPAREN
@@ -1200,8 +1181,7 @@ expression_desc:
         unop "diamond" e ($startpos(d)) ($endpos(d)) } */
 
   | ltl_operator = ltl_operator LPAREN e = expression RPAREN
-      { Printf.printf "expression_desc: ltl_operator: %s(e)\n" ltl_operator; 
-        unop ltl_operator e ($startpos(ltl_operator)) ($endpos(ltl_operator)) }     
+      { unop ltl_operator e ($startpos(ltl_operator)) ($endpos(ltl_operator)) }     
 
   | e = simple_expression
           LBRACE s1 = size_expression DOTDOT s2 = size_expression RBRACE
@@ -1312,19 +1292,16 @@ label_expression:
 /* identifiers */
 ide:
   | i = IDENT
-      { Printf.printf "ide: IDENT: %s\n" i;
-          i }
+      { i }
   | LPAREN i = infx RPAREN
       { i }
 ;
 
 ext_ident:
   | q = qual_ident
-      { Printf.printf "ext_ident: qual_ident\n";
-          Modname(q) }
+      { Modname(q) }
   | i = ide
-      { Printf.printf "ext_ident: ide: %s\n" i;
-          Name(i) }
+      { Name(i) }
 ;
 
 infx:
@@ -1380,12 +1357,12 @@ type_expression:
   | t = simple_type
       { t }
   | tl = type_star_list
-      { Printf.printf "type star list\n"; make(Etypetuple(List.rev tl)) $startpos $endpos}
+      { make(Etypetuple(List.rev tl)) $startpos $endpos}
   (* functions with refinement pairs *)
   | tl = type_star_list BAR e = seq_expression
-      { Printf.printf " function with refinement pair\n"; make(Erefinementpairfuntype(List.rev tl, e)) $startpos $endpos}
+      { make(Erefinementpairfuntype(List.rev tl, e)) $startpos $endpos}
   | t_arg = type_expression a = arrow t_res = type_expression
-      { Printf.printf "type exp -> type exp\n"; make(Etypefun(a, None, t_arg, t_res)) $startpos $endpos}
+      { make(Etypefun(a, None, t_arg, t_res)) $startpos $endpos}
   | LPAREN id = IDENT COLON t_arg = type_expression RPAREN
 			    a = arrow t_res = type_expression
     { make(Etypefun(a, Some(id), t_arg, t_res)) $startpos $endpos}
@@ -1393,32 +1370,32 @@ type_expression:
   | LBRACE seq = seq_expression RBRACE {make(Eipoptype(seq)) $startpos $endpos}*)
   | LPAREN id = IDENT COLON t_arg = type_expression RPAREN
 			    a = arrow t_res = type_expression
-      { Printf.printf "type arrow and :\n"; make(Etypefun(a, Some(id), t_arg, t_res)) $startpos $endpos}
+      { make(Etypefun(a, Some(id), t_arg, t_res)) $startpos $endpos}
   (*Refinement type expression*)
   (* TODO: Make a refinement type data structure that stores all the data from this *)
   (*make(Erefinement(basetype, seq)) $startpos $endpos*)
 
   (* New-syntax Erefinement in type_expression *)
   | LBRACE label_type = label_type BAR seq = seq_expression RBRACE
-    { Printf.printf "new-syntax type refinement\n"; make(Erefinement(label_type, seq)) $startpos $endpos}
+    { make(Erefinement(label_type, seq)) $startpos $endpos}
 
   | LBRACE label_type_star_list = label_type_star_list BAR seq = seq_expression RBRACE
-    {Printf.printf "new-syntax refinement tuple\n"; make(Erefinementlabeledtuple(List.rev label_type_star_list, seq)) $startpos $endpos}
+    { make(Erefinementlabeledtuple(List.rev label_type_star_list, seq)) $startpos $endpos}
 
   /* | basetype = simple_type LBRACE seq = seq_expression RBRACE 
       {Printf.printf "type refinement\n"; make(Erefinement(basetype, seq)) $startpos $endpos}  */
 
   | LPAREN id = IDENT COLON t_arg = simple_type LBRACE seq = seq_expression RBRACE RPAREN a = arrow t_res = type_expression
-      { Printf.printf "type typefunrefinement\n"; make(Etypefunrefinement(a, Some(id), t_arg, t_res , seq)) $startpos $endpos}
+      { make(Etypefunrefinement(a, Some(id), t_arg, t_res , seq)) $startpos $endpos}
 ;
 
 simple_type:
   | t = type_var
-      { Printf.printf "type var\n"; make (Etypevar t) $startpos $endpos }
+      { make (Etypevar t) $startpos $endpos }
   | i = ext_ident
-      { Printf.printf "type constr\n"; make (Etypeconstr(i, [])) $startpos $endpos }
+      { make (Etypeconstr(i, [])) $startpos $endpos }
   | t = simple_type i = ext_ident
-      { Printf.printf "simple type constr\n"; make (Etypeconstr(i, [t])) $startpos $endpos }
+      { make (Etypeconstr(i, [t])) $startpos $endpos }
   (*simple refinement type*)
 
   /* | basetype = simple_type LBRACE seq = seq_expression RBRACE 
@@ -1430,9 +1407,9 @@ simple_type:
   (*| LPAREN t = type_expression COMMA tl = type_comma_list RPAREN i = ext_ident
       { Printf.printf "type expression list\n"; make (Etypeconstr(i, t :: tl)) $startpos $endpos }*)
   | t_arg = simple_type LBRACKET s = size_expression RBRACKET
-      { Printf.printf "type vec\n"; make(Etypevec(t_arg, s)) $startpos $endpos}
+      { make(Etypevec(t_arg, s)) $startpos $endpos}
   | LPAREN t = type_expression RPAREN
-      { Printf.printf "type expression\n"; t }
+      { t }
 ;
 
 type_star_list:
@@ -1444,7 +1421,7 @@ type_star_list:
 
 label_type_star_list:
   | t1=label_type STAR t2 = label_type
-      { Printf.printf "label_type star list\n";[t2; t1]}
+      { [t2; t1]}
   | tsl = label_type_star_list STAR t = label_type
       { t :: tsl }
 
