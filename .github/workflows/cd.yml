@@ -1,0 +1,21 @@
+---
+name: Automated Testing
+
+on: push
+  # push:
+  #   branches:
+  #     - main
+  #     - dependent_types_new_syntax
+  #     - dependent_types
+  # pull_request: []
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Test
+        run: echo "Hi! This is a test"
+
