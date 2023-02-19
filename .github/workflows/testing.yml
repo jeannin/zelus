@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Set up OCaml
+        uses: ocaml/setup-ocaml@v2
       - name: Build
         run: ./configure && dune build && dune install
       - name: Run tests
