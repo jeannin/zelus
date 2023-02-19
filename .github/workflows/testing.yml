@@ -16,8 +16,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up OCaml
+
+      - name: Use OCaml
         uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.13.1
+
+      # - name: Install OCaml dependencies
+      #   run: |
+      #     opam depext sundialsml
+      #     opam install graphics sundialsml zelus zelus-gtk
+
+      # - name: Build all examples
+      #   run: |
+      #     cd examples 
+      #     opam exec -- dune build --root .  
+
+      # - name: Set up OCaml
+      #   uses: ocaml/setup-ocaml@v2
       - name: Build
         run: ./configure && dune build && dune install
       - name: Run tests
