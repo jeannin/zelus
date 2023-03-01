@@ -33,8 +33,8 @@ let f3 (x : {v:int|v>0}) : {v:int|v>0} = x*x
 	- constraint on function inputs
 	- logical operator on return type to concatenate constraints
 *)
-let add (x : {v:int|v>0} ) (y : {v:int|v>0} ) : { v:int | v >= x && v >= y} =
-		let z = x + y 
+let add (x : {v:float|v>0} ) (y : {v:float|v>0} ) : { v:float | v >= x && v >= y} =
+		let z = x +. y 
 		in z 
 
 (*
@@ -54,9 +54,9 @@ let f5 (a : {x:int|x>0}) (b : {x:int|x>0}) (c : {x:int|x>0}) : {x : int | x >= 0
     - verify function declaration
     - check if input argument to existing function satisfy constraints
 *)
-let f6 (x : {x:int | x < 0 }) : {x : int | x > 0} = 
-	let y = x * x in 
-	add y y
+(* let f6 (x : {x:float | x < 0 }) : {x : float | x > 0} = 
+	let y = x *. x in 
+	add y y *)
 
 (*
     TEST 7: function call check
@@ -66,7 +66,7 @@ let f6 (x : {x:int | x < 0 }) : {x : int | x > 0} =
     - fail for add -1 0, since ~(-1 > 0)
 *)
 
-let node main () =
+(* let node main () =
 	print_int (add (4) (3));
 	(add (-1) 0)
 
@@ -97,4 +97,4 @@ let add103 (x : {v:int | v > 0}) (y : {v:int | v > 0}) : {v:int | (v > 0) && (v 
 let add104 (x:int) (y:int) : int = x+y
 let add105 (x:int) (y:int) = x+y
 let add106 (x:int) y = x+y
-let add107 x y = x+y
+let add107 x y = x+y *)

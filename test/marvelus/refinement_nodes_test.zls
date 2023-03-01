@@ -1,0 +1,10 @@
+let dt = 0.1
+let node integr ((x0, x') : {(v:float) * (w:float) | v >= 0. && w >= 0.}) : {v : float | v >= 0.} = x  where
+  rec x = x0 -> pre (x +. x' *. dt)
+
+let node call_node () : {v : int | v >= 0.} = x where
+    x = integr(0.0,1.0)
+
+let node main () = 
+    let x = call_node()
+    in print_float (x); print_newline ()
