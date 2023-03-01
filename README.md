@@ -7,15 +7,23 @@ This code demonstration contains the source code for Zélus and the additional M
 The MARVeLus contribution to the project can be found on the following paths:
 
 ./test/marvelus                  : unit tests for the refinement type checker
+
 ./compiler/verif/z3refinement.ml : source code for the refinement type checker
+
 ./examples/marvelus              : folder with programs tested and verified
+
 ./examples/rob_lcm_sim           : folder with test examples for the robot drivers
+
+
 
 The following files were modified from the original Zélus repository to allow for MARVeLus integration
 
 ./compiler/parsing/zparser.mly
+
 ./compiler/parsing/zlexer.mll
+
 ./compiler/parsing/zparsetree.ml
+
 ./compiler/main/compiler.ml
 
 ## Installing MARVeLus
