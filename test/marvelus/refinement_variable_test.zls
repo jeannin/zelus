@@ -3,31 +3,31 @@
 (* 	TEST 1: refinement variable declaration 
 
 	- test constant numbers, defined variables, operators
+	- all tests should check
 *)
-let pi = 3.14159
-(* let w = 2.*.pi
+let pi : {v:float | v = 3.14159} = 3.14159
+let w  : {v:float | v = 2.*.pi} = 2.*.pi
 let y0 : {v:float | v >= pi} = 4.0
-let y1 : {v:float | v >= y0*.2.} = 10.0 *)
+let y1 : {v:float | v >= y0*.2.} = 10.0
 
 
 (*
   TEST 2: custom refinement type definition
 
 *)
-(* 
+
 type nat = {v : int | v >= 0}
 
 (* 
-	TEST 3: treat base variable as trivially true refinement variable
-*)
-let x0 : int = 3
-
-(* 
 	TEST 3: false declaration
+
+	- test should fail checking
 *)
 let x2 : {v:int|v>4} = 3
 
 (* 
 	TEST 4: false float declaration
+
+	- test should fail checking
 *)
-let y6 : {v:float | v >= 0} = -1.2 *)
+let y6 : {v:float | v >= 0} = -1.2 
