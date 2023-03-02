@@ -20,7 +20,7 @@ The following files were modified from the original Zélus repository to allow f
 
 ## Installing MARVeLus
 
-To build and install MARVeLus the computer requires [Opam](https://opam.ocaml.org/), the OCaml package manager.
+Building and installng MARVeLus requires [Opam](https://opam.ocaml.org/), the OCaml package manager.
 
 ### Download Dependencies
 MARVeLus requires a few dependencies to run properly, which can be downloaded using:
