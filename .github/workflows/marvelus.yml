@@ -39,6 +39,8 @@ jobs:
       
       - name: Build MARVeLus
         run: |
+          pwd
+          ls
           chmod 775 ./github-actions-push.sh
           ./github-actions-push.sh
 
