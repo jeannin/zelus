@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Define ANSI escape codes for colors
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Build and Install
+echo Running MARVeLus CI/CD
+eval $(opam env)
+./configure
+opam exec -- dune build @install --root .
+opam exec -- dune install --root .
+
+# Running tests
+echo "Running MARVeLus unit tests..."
+
+cd ./test/marvelus
+
+# Run make and capture the output
+output=$(make 2>&1)
+status=$?  # Assign the exit status of make to the variable "status"
+
+# clean code tests
+make clean
+echo "$output"
+
+# Change back to the original directory
+cd ../..
+
+# Check the exit code of make
+if [ $status -ne 0 ]; then
+  echo -e "${RED}Error: make failed${NC}"
+  exit 1
+else
+  # Otherwise test ran successfully
+  echo -e "${GREEN}All unit tests succeeded${NC}"
+fi
