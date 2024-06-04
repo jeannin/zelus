@@ -538,7 +538,7 @@ let immediate ctx i =
     l_eq: eq list; (* the set of parallel equations *)
     mutable l_env: Deftypes.tentry Zident.Env.t;
     l_loc: location } *)
-let rec create_base_var_from_pattern ctx env pat =
+let rec create_base_var_from_pattern ctx env typenv pat =
     Printf.printf "create_base_var_from_pattern\n";
     match pat.p_desc with 
     | Etypeconstraintpat(p,t) ->
@@ -559,6 +559,8 @@ let rec create_base_var_from_pattern ctx env pat =
       (match p.p_desc with 
       | Evarpat(n) -> debug (Printf.sprintf "Etypeconstraintpat: %s\n" n.source); create_z3_var_typed ctx env n.source base_type
       ) 
+      | Evarpat(n) -> debug(Printf.sprintf "Evarpat: (%s : %d) \n" n.source n.num); create_z3_var ctx env n.source
+      | _ -> debug (Printf.sprintf "Invalid path, printing for debugging purposes\n"); (vc_gen_pattern ctx env typenv pat); (Arithmetic.Real.mk_const_s ctx "42.0")
 
 and vc_gen_equation_operation ctx env typenv op e_list pat =
     (*
@@ -571,7 +573,7 @@ and vc_gen_equation_operation ctx env typenv op e_list pat =
         Currently used to type check streams
     *)
     Printf.printf "vc_gen_equation_operation\n";
-    let base_var = create_base_var_from_pattern ctx env pat in 
+    let base_var = create_base_var_from_pattern ctx env typenv pat in 
     let refinement_expr = 
         match pat.p_desc with 
         | Etypeconstraintpat(p, t) ->
@@ -585,6 +587,7 @@ and vc_gen_equation_operation ctx env typenv op e_list pat =
                    (vc_gen_substitute (var_name) env ctx typenv)
                 )
           )
+        | Evarpat(n) -> Boolean.mk_true ctx 
     in
     match op, e_list with
         | Efby, [e1; e2] ->
@@ -655,7 +658,7 @@ and vc_gen_equation_expression ctx env e typenv pat =
 (*
         ctx    -> z3 context
         env    -> environment (list of z3 vc_gen_expressions)
-        desc   -> vc_gen_expression desciption
+        desc   -> vc_gen_expression description
         loc    -> vc_gen_expression location
         typenv -> typing environment ( Hash table of string = variable name * string = base type)
 

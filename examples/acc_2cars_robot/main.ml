@@ -1,15 +1,6 @@
 open Ztypes
 open Zls
-open Sys;; 
-catch_break true 
-external lcm_stop: unit -> unit = "LCM_stop"
 
-let is_done = false;; 
-let cleanup () = (); 
-print_string "Interrupted";
-
-print_newline (); 
-lcm_stop ();; 
 (* simulation (continuous) function *)
 let main = 
   let cstate = 
@@ -37,8 +28,5 @@ let main =
          horizon };;
 (* instantiate a numeric solver *)
 module Runtime = Zlsrun.Make (Defaultsolver)
- 
-let _ = try Runtime.go main
- with Break ->cleanup()(*;
-try Runtime.go main
- with Break ->()*)
+
+let _ = Runtime.go main

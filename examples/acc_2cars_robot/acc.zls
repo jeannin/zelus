@@ -5,7 +5,7 @@ let xli:{v: float | v > 0.} = 2.
 let xbrake:{v: float | v >= xli} = 4.
 let amax:{v: float | v >= 0.} = 0.06
 
-let node exec () = 
+let node exec () : {(vxf:float)*(vvf:float)*(vaf:float)*(vxl:float)*(vvl:float)*(vval:float) | true } = 
   let rec ((xf, vf, af, xl, vl, al): 
     {(x:float)*(v:float)*(a:float)*(x2:float)*(v2:float)*(a2:float) | 
         (x2 >= xli) &&
