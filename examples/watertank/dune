@@ -1,0 +1,42 @@
+(env (dev (flags (:standard -w -a))))
+
+(rule
+ (targets sim.ml water_main.ml)
+ (enabled_if (= %{env:MODE=sim} "sim"))
+ (deps (:zl sim.zls) (package zelus))
+ (action (run zeluc -deps -gtk2 -s main_sim -o water_main %{zl})))
+
+(rule
+ (targets sim.ml water_main.ml)
+ (enabled_if (= %{env:MODE=sim} "robot"))
+ (deps (:zl sim.zls) (package zelus))
+ (action (run zeluc -deps -gtk2 -s main_robot -o water_main %{zl})))
+
+(rule
+ (targets sim_c.ml water_main_c.ml)
+ (enabled_if (= %{env:MODE=sim} "sim"))
+ (deps (:zl sim_c.zls) (package zelus))
+ (action (run zeluc -deps -gtk2 -s main_sim -o water_main_c %{zl})))
+
+(rule
+ (targets sim_c.ml water_main_c.ml)
+ (enabled_if (= %{env:MODE=sim} "robot"))
+ (deps (:zl sim_c.zls) (package zelus))
+ (action (run zeluc -deps -gtk2 -s main_robot -o water_main_c %{zl})))
+
+(rule
+ (targets sim_auto.ml water_main_auto.ml)
+ (enabled_if (= %{env:MODE=sim} "sim"))
+ (deps (:zl sim_auto.zls) (package zelus))
+ (action (run zeluc -deps -gtk2 -s main_sim -o water_main_auto %{zl})))
+
+(rule
+ (targets sim_auto.ml water_main_auto.ml)
+ (enabled_if (= %{env:MODE=sim} "robot"))
+ (deps (:zl sim_auto.zls) (package zelus))
+ (action (run zeluc -deps -gtk2 -s main_robot -o water_main_auto %{zl})))
+
+(executables
+ (names water_main water_main_c water_main_auto)
+ (libraries lablgtk2 zelus zelus-gtk)
+ (promote (until-clean)))

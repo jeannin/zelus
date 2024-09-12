@@ -1,0 +1,48 @@
+let initlevel:{v:float | v >= 0.} = 2.
+let minlevel:{v:float | v >= 0.} = 1.
+let maxlevel:{v:float | v > minlevel} = 5.
+let maxflow:{v:float | v >= 0.} = 3.
+let outflow:{v:float | v <= 0.} = -1.
+let margin:{v:float | v >= 0.} = 0.5
+let dt:{v:float | v > 0.}= 0.1
+
+(*
+m:float -> {c:float |
+(m <= (minlevel +. margin) && (cflow +. outflow >= 0.)) || (m >= (maxlevel -. margin) && (cflow +. outflow ‹= 0.))}*)
+let node controller(mlevel) = cflow where
+	rec cflow = (if mlevel <= minlevel +. margin then maxflow
+		else if mlevel >= maxlevel -. margin then 0. else (0. fby cflow))
+
+let node sim_tank(cflow) = mlevel where
+	rec mlevel = initlevel fby (mlevel +. ((cflow +. outflow) *. dt))
+(*
+let node robot_put(key, value) = (print_string "Put value:"); (print_string key); (print_string "->"); (print_float value); (print_newline ())
+
+let node robot_get(key) = mlevel where
+	rec mlevel = 5. 
+	and () = (print_string "Get value: "); (print_string key); (print_string "<-"); (print_float mlevel); (print_newline ()) *)
+(*
+let node real_tank(cflow) = mlevel where
+	mlevel = (robot_get ("level"))
+	and () = (robot_put("flow", cflow))*)
+(*
+let node graph(cflow, mlevel, t) = 
+	let s = Scope.scope2
+		(0., 5.,
+			("mlevel", Scope.linear, mlevel),
+			("cflow", Scope.points true, cflow)) in
+	Scope.window ("Water tank", 10.0, t, s)*)
+	
+let node main_sim () = 
+	let rec cflow = controller(mlevel)
+	and (*mlevel:{v:float | v >= 0.}*)mlevel = sim_tank(cflow) 
+	and t = 0. fby (t +. dt) in
+	(print_float mlevel; print_newline ()(*; graph(cflow, mlevel, t)*))
+(*
+let node main_robot () = 
+	let rec cflow = controller(mlevel)
+	and mlevel = real_tank(cflow) 
+	and t = 0. fby (t +. dt) in ()*)
+
+
+

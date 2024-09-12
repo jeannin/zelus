@@ -1,0 +1,53 @@
+
+let initlevel = 2.
+let minlevel = 1.
+let maxlevel = 5.
+(* Appears to be an off-by-one error in the continuous or discrete version, as the simulation runs one more cycle before switching when maxflow is exactly 3 *)
+let maxflow = 3.
+let outflow = -1.
+let margin = 0.5
+let dt = 0.1
+
+
+let node controller(mlevel) = cflow where
+	rec cflow = (if mlevel <= minlevel +. margin then maxflow
+		else if mlevel >= maxlevel -. margin then 0. else (0. fby cflow))
+
+let hybrid sim_tank(cflow) = mlevel where
+	der mlevel = (cflow +. outflow) init initlevel 
+
+let node robot_put(key, value) = (print_string "Put value:"); (print_string key); (print_string "->"); (print_float value); (print_newline ())
+
+let node robot_get(key) = mlevel where
+	rec mlevel = 5. 
+	and () = (print_string "Get value: "); (print_string key); (print_string "<-"); (print_float mlevel); (print_newline ()) 
+
+let node real_tank(cflow) = mlevel where
+	mlevel = (robot_get ("level"))
+	and () = (robot_put("flow", cflow))
+
+let node graph(cflow, mlevel, t) = 
+	let s = Scope.scope2
+		(0., 5.,
+			("mlevel", Scope.linear, mlevel),
+			("cflow", Scope.points true, cflow)) in
+	Scope.window ("Water tank", 10.0, t, s)
+	
+
+let hybrid main_sim () = 
+	let clock = (period (dt)) 
+	and der t = 1. init 0. in
+
+	(* init 0. is not used because clock is present at the first instant *)
+	let rec cflow = present (clock) -> controller(mlevel) init 0.
+	and mlevel = sim_tank(cflow) 
+	in present (clock) -> (print_float mlevel; print_newline (); graph(cflow, mlevel, t)) init ()
+
+let hybrid main_robot () = 
+	let clock = (period (dt))
+	and der t = 1. init 0. in
+	present (clock) ->
+		(let rec
+	cflow = controller(mlevel)
+	and mlevel = real_tank(cflow) 
+	in graph(cflow, mlevel, t)) init ()

@@ -1,0 +1,67 @@
+(* {v:float | v >= 0.}*)
+let initlevel = 2.
+
+(* {v:float | v >= 0.}*)
+let minlevel = 1.
+
+(* {v:float | v > minlevel}*)
+let maxlevel = 5.
+
+(* {v:float | v >= 0.}*)
+let maxflow = 3.
+
+(* {v:float | v <= 0.}*)
+let outflow = -1.
+
+(* {v:float | v >= 0.}*)
+let margin = 0.5
+
+(* {v:float | v >= 0}*)
+let dt = 0.1
+
+(* m:float -> {c:float | 
+	(m <= (minlevel +. margin) && (cflow +. outflow >= 0.)) || 
+	(m >= (maxlevel -. margin) && (cflow +. outflow <= 0.))} *)
+let node controller(mlevel) = cflow where
+	rec cflow = (if mlevel <= minlevel +. margin then maxflow
+		else if mlevel >= maxlevel -. margin then 0. else (0. fby cflow))
+
+let hybrid sim_tank(cflow) = mlevel where
+	der mlevel = (cflow +. outflow) init initlevel 
+
+let node robot_put(key, value) = (print_string "Put value:"); (print_string key); (print_string "->"); (print_float value); (print_newline ())
+
+let node robot_get(key) = mlevel where
+	rec mlevel = 5. 
+	and () = (print_string "Get value: "); (print_string key); (print_string "<-"); (print_float mlevel); (print_newline ()) 
+
+let node real_tank(cflow) = mlevel where
+	mlevel = (robot_get ("level"))
+	and () = (robot_put("flow", cflow))
+
+let node graph(cflow, mlevel, t) = 
+	let s = Scope.scope2
+		(0., 5.,
+			("mlevel", Scope.linear, mlevel),
+			("cflow", Scope.points true, cflow)) in
+	Scope.window ("Water tank", 10.0, t, s)
+	
+(* NOTE: Having two entry points (sim vs robot) means that any type spec on the system variables in one must match the other, or else the verification potentially only applies to one *)
+let hybrid main_sim () = 
+	let rec 
+	clock = (period (dt))
+
+	and cflow = present (clock) -> controller(mlevel) init 0.
+
+	(* mlevel:{v:float | v >= minlevel && v <= maxlevel} *)
+	and mlevel = sim_tank(cflow) 
+	and der t = 1. init 0. 
+	in present (clock) -> (print_float mlevel; print_newline (); graph(cflow, mlevel, t)) init ()
+
+let hybrid main_robot () = 
+	let clock = (period (dt)) in
+	present (clock) ->
+		(let rec
+	cflow = controller(mlevel)
+	and mlevel = real_tank(cflow) 
+	in ()) init ()
