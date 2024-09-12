@@ -1,4 +1,4 @@
-
+(* Trying to make main_sim match main_robot by pushing the der t and clocks up, leaving present() on control and mlevel *)
 let initlevel = 2.
 let minlevel = 1.
 let maxlevel = 5.
