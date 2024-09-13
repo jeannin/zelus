@@ -1,28 +1,44 @@
+(* {v:float | v >= 0.}*)
 let initlevel = 2.
+
+(* {v:float | v >= 0.}*)
 let minlevel = 1.
+
+(* {v:float | v > minlevel}*)
 let maxlevel = 5.
+
+(* {v:float | v >= 0.}*)
 let maxflow = 3.
+
+(* {v:float | v <= 0.}*)
 let outflow = -1.
+
+(* {v:float | v >= 0.}*)
 let margin = 0.5
+
+(* {v:float | v >= 0.}*)
 let dt = 0.125
 
+(* Control invariant: the system has enough control authority to move the water level in the "correct" direction based on sensor indications *)
+(* m:float -> {c:float | 
+    (m <= (minlevel +. margin) -> (cflow +. outflow >= 0.)) && 
+    (m >= (maxlevel -. margin) -> (cflow +. outflow <= 0.))} *)
 let node controller(mlevel:float) = 
-cflow:{v:float | (0. <= v) && (v <= maxflow) && (mlevel >= maxlevel -. margin => (v +. outflow <= 0)) && (mlevel <= minlevel +. margin => (v +. outflow >= 0))} where
-	rec cflow = (if mlevel <= minlevel +. margin then maxflow
-		else if mlevel >= maxlevel -. margin then 0. else (0. fby cflow))
+	let rec cflow = (if mlevel <= minlevel +. margin then maxflow
+		else if mlevel >= maxlevel -. margin then 0. else (0. fby cflow)) in cflow
 
-let node sim_tank(cflow) = mlevel where
-	rec mlevel = initlevel fby (mlevel +. ((cflow +. outflow) *. dt))
+let node sim_tank(cflow) =
+	let rec mlevel = initlevel fby (mlevel +. ((cflow +. outflow) *. dt)) mlevel
 
 let node robot_put(key, value) = (print_string "Put value:"); (print_string key); (print_string "->"); (print_float value); (print_newline ())
 
-let node robot_get(key) = mlevel where
-	rec mlevel = 5. 
-	and () = (print_string "Get value: "); (print_string key); (print_string "<-"); (print_float mlevel); (print_newline ()) 
+let node robot_get(key) = 
+	let rec rec mlevel = 5. 
+	and () = (print_string "Get value: "); (print_string key); (print_string "<-"); (print_float mlevel); (print_newline ()) in mlevel
 
-let node real_tank(cflow) = mlevel where
-	mlevel = (robot_get ("level"))
-	and () = (robot_put("flow", cflow))
+let node real_tank(cflow) = 
+	let mlevel = (robot_get ("level"))
+	and () = (robot_put("flow", cflow)) in level
 
 let node graph(cflow, mlevel, t) = 
 	let s = Scope.scope2
@@ -33,12 +49,24 @@ let node graph(cflow, mlevel, t) =
 	
 let node main_sim () = 
 	let rec cflow = controller(mlevel)
+	(* mlevel:{v:float | v >= minlevel && v <= maxlevel && maxlevel >= (v +. (cflow +. outflow) >= minlevel} -- The main safety condition + invariant *)
+	(* Inductive invariant: show that today's control command, integrated over time on today's level, doesn't overflow or empty the tank, since tomorrow we will carry out this computation. *)
+	
+	(* Because cflow and mlevel are mutually recursive, which happens first--do we issue the command to the valve first, or do we read from the tank first? Is it possible to tell without reading through the code and finding unit delays? Possibly not. So it's a good thing that's already figured out for us.*)
+	(* cflow instantaneously depends on mlevel, while the calculation of mlevel (in sim_tank) has a unit delay *)
+	(* mlevel depends on cflow and mlevel itself but they're guarded by a fby, so it really depends on cflow and mlevel from yesterday. *)
+	(* Therefore this program is integrating yesterday's control and level to get today's level (which is mlevel) and then using today's level to calculate today's control *)
+	(* The sequence of events looks like: simulate tank -> compute control -> wait until next time step, repeat. *)
+	(* So by tomorrow, it will take today's level and control, and integrate them to get tomorrow's level. *)
+ 	(* Therefore the controller / valve / level reacts instantly and so the amount by which we exceed (maxlevel -. margin) is strictly less than (dt * (maxflow -. outflow)) *)
+
+	(* We expect nodes to be in-lined while type checking, otherwise fby isn't immediately visible without interpreting functions *)
 	and mlevel = sim_tank(cflow) 
 	and t = 0. fby (t +. dt) in
 	(print_float mlevel; print_newline (); graph(cflow, mlevel, t))
 
-(* Is main_robot necessary? *)
 let node main_robot () = 
 	let rec cflow = controller(mlevel)
+	(* Now does this mlevel also need to be verified? *)
 	and mlevel = real_tank(cflow) 
 	and t = 0. fby (t +. dt) in ()
