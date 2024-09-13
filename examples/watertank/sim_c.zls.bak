@@ -22,7 +22,7 @@ let node robot_get(key) = mlevel where
 	rec mlevel = 5. 
 	and () = (print_string "Get value: "); (print_string key); (print_string "<-"); (print_float mlevel); (print_newline ()) 
 
-let node real_tank(cflow) = mlevel where
+let node io_tank(cflow) = mlevel where
 	mlevel = (robot_get ("level"))
 	and () = (robot_put("flow", cflow))
 
@@ -46,8 +46,9 @@ let hybrid main_sim () =
 let hybrid main_robot () = 
 	let clock = (period (dt))
 	and der t = 1. init 0. in
+
 	present (clock) ->
-		(let rec
-	cflow = controller(mlevel)
-	and mlevel = real_tank(cflow) 
-	in graph(cflow, mlevel, t)) init ()
+	  (let rec cflow = controller(mlevel)
+	       and mlevel = io_tank(cflow) 
+	   in graph(cflow, mlevel, t)) 
+	init ()

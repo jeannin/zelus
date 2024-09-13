@@ -37,6 +37,7 @@ let node main_sim () =
 	and t = 0. fby (t +. dt) in
 	(print_float mlevel; print_newline (); graph(cflow, mlevel, t))
 
+(* Is main_robot necessary? *)
 let node main_robot () = 
 	let rec cflow = controller(mlevel)
 	and mlevel = real_tank(cflow) 

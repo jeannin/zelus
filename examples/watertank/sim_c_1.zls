@@ -32,39 +32,19 @@ let node graph(cflow, mlevel, t) =
 			("mlevel", Scope.linear, mlevel),
 			("cflow", Scope.points true, cflow)) in
 	Scope.window ("Water tank", 10.0, t, s)
-
-let sample(level) = level	
+	
 
 let hybrid main_sim () = 
 	let clock = (period (dt)) 
 	and der t = 1. init 0. in
 
 	(* init 0. is not used because clock is present at the first instant *)
-	let rec cflow = present (clock) -> let mlevel = sample(level) in controller(mlevel) init 0.
-	and level = sim_tank(cflow) 
-	in present (clock) -> (print_float level; print_newline (); graph(cflow, level, t)) init ()
+	let rec cflow = present (clock) -> controller(mlevel) init 0.
+	and mlevel = sim_tank(cflow) 
+	in present (clock) -> (print_float mlevel; print_newline (); graph(cflow, mlevel, t)) init ()
 
-(* The thing that compiles to the physical robot controller *)
-let node main_robot2 (mlevel, cflow) = (mlevel, cflow) where 
-	rec cflow = controller(mlevel)
-    and mlevel = io_tank(cflow)
-
-(*
-(* Trying to tease apart the physical robot, runs fine *)
 let node main_robot () = () where
-	rec t = 0. fby t +. dt
-    and (mlevel, cflow) = main_robot2(mlevel, cflow) 
-    and () = graph(cflow, mlevel, t)*)
-
-(* Can we make the main robot continuous? *)
-let hybrid main_robot () =
- 	let clock = (period (dt)) 
-	and der t = 1. init 0. in
-	
-	
-    (present(clock) -> let rec (mlevel, cflow) = main_robot2(mlevel, cflow) 
-		in graph(cflow, mlevel, t)
-	init ())
-
-
-
+	rec cflow = controller(mlevel)
+	and mlevel = io_tank(cflow)
+	and t = 0. fby t +. dt 
+	and () = graph(cflow, mlevel, t)
