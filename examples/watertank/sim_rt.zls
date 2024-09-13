@@ -28,7 +28,7 @@ let node controller(mlevel:float) =
 		else if mlevel >= maxlevel -. margin then 0. else (0. fby cflow)) in cflow
 
 let node sim_tank(cflow) =
-	let rec mlevel = initlevel fby (mlevel +. ((cflow +. outflow) *. dt)) mlevel
+	let rec mlevel = initlevel fby (mlevel +. ((cflow +. outflow) *. dt)) in mlevel
 
 let node robot_put(key, value) = (print_string "Put value:"); (print_string key); (print_string "->"); (print_float value); (print_newline ())
 
