@@ -1232,6 +1232,7 @@ and vc_gen_operator ctx env typenv e e_list =
         Quantifier.expr_of_quantifier (Quantifier.mk_exists ctx [] [] 
                                         (vc_gen_expression ctx env op_l typenv) None [] [] None None)
     | "~-" | "~-." -> debug(Printf.sprintf "Unary minus:"); Arithmetic.mk_unary_minus ctx (vc_gen_expression ctx env op_l typenv)
+    | "not" -> Boolean.mk_not ctx (vc_gen_expression ctx env op_l typenv)
     | s -> debug(Printf.sprintf "Non-standard vc_gen_operator s : %s\n" s); 
       prove_function ctx s env e_list typenv
     | t -> debug(Printf.sprintf "Invalid vc_gen_expression symbol: %s\n" t); debug(Printf.sprintf "%d\n" (List.length e_list)); raise (AstTranslationNotImplemented "vc_gen_operator: Operator not implemented")
