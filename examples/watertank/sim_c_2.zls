@@ -1,4 +1,5 @@
-
+(* Hybrid main robot again, made to look more similar to main_sim 
+Can we have the ODE in a discrete node? (dual of having discrete in a hybrid node) *)
 let initlevel = 2.
 let minlevel = 1.
 let maxlevel = 5.

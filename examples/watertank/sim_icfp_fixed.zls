@@ -1,0 +1,19 @@
+let maxflow:{v:float | v > 0.} = 0.5
+let outflow:{v:float | v < 0.} = -0.1
+let minlevel:{v:float | v > 0} = 1.
+let maxlevel:{v:float | v > minlevel} = 19.
+let dt:{v:float | v > 0.} = 1.
+let node exec ()  : {(vf:float)*(vl:float) | true} =
+  let rec ((flow, level):{(f:float)*(l:float) | 
+      ((l >= minlevel && l <= maxlevel) && 
+      ((l <= (maxlevel -. dt *. (maxflow +. outflow)) && f = maxflow) 
+        || (l >= (minlevel -. dt *. outflow) && f = 0.)))}) =
+    (0., 15.) fby 
+    (let newlevel = (level +. (flow +. outflow) *. dt) models (robot_get ("level")) in
+	((if (newlevel <= (minlevel -. dt *. outflow)) then maxflow else 
+      (if (newlevel >= (maxlevel -. dt *. (maxflow +. outflow))) then 0. else flow)),
+      newlevel))
+    (*(if (level <= (minlevel -. 2. *. dt *. outflow)) then maxflow else 
+      (if (level >= (maxlevel -. 2. *. dt *. (maxflow +. outflow))) then 0. else flow)),
+      (level +. (flow +. outflow) *. dt) models (robot_get ("level"))*) 
+    in (() models robot_str ("flow", flow)); (flow, level)

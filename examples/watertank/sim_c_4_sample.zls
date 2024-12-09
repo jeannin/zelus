@@ -1,4 +1,4 @@
-
+(* A more modular approach that still has main_robot but with get/put functions that switch roles depending on robot/simulation mode *)
 let initlevel = 2.
 let minlevel = 1.
 let maxlevel = 5.

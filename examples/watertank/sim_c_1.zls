@@ -1,4 +1,4 @@
-
+(* The original continuous code, cleaned up and with a discrete rather than hybrid main_robot *)
 let initlevel = 2.
 let minlevel = 1.
 let maxlevel = 5.

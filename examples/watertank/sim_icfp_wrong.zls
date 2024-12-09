@@ -1,0 +1,24 @@
+let dt:{v:float | v > 0.} = 0.1
+let maxflow:{v:float | v > 0.} = 0.5
+let outflow:{v:float | v < 0.} = -0.1
+let minlevel:{v:float | v > 0} = 1.
+let maxlevel:{v:float | v > minlevel} = 19.
+let node exec ()  : {(vf:float)*(vl:float) | true} =
+  let rec ((flow, level):{(f:float)*(l:float) | 
+      ((l >= minlevel && l <= maxlevel) && 
+      ((l <= (maxlevel -. dt *. (maxflow +. outflow)) && f = maxflow) 
+        || (l >= (minlevel -. dt *. outflow) && f = 0.)))}) =
+    (0., 15.) fby
+	(* Must have at most minlevel + 17.92 but no bigger than 17.92, and no smaller than 0.02, maxlevel - 0.08 but no smaller than 0.08*) 
+    ((if (level <= (minlevel +. 0.02)) then maxflow else 
+      (if (level >= (maxlevel -. 0.08)) then 0. else flow)),
+      (level +. (flow +. outflow) *. dt) models (robot_get ("level"))) 
+	(* Bare minimum margins that work *)
+    (*(if (level <= (minlevel +. 0.02)) then maxflow else 
+      (if (level >= (maxlevel -. 0.08)) then 0. else flow),
+      (level +. (flow +. outflow) *. dt) models (robot_get ("level")))*)
+	(* 2*dt since the system is delayed by more one time step *) 
+    (*(if (level <= (minlevel -. 2. *. dt *. outflow)) then maxflow else 
+      (if (level >= (maxlevel -. 2. *. dt *. (maxflow +. outflow))) then 0. else flow)),
+      (level +. (flow +. outflow) *. dt) models (robot_get ("level"))*) 
+    in (() models robot_str ("flow", flow)); (flow, level)

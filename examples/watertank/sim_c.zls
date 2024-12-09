@@ -35,6 +35,27 @@ let node graph(cflow, mlevel, t) =
 
 let sample(level) = level	
 
+
+
+(* A modified controller that instead relies on zero crossings to regulate the water level *)
+let hybrid main_sim () = 
+	let clock = (period (dt)) 
+	and der t = 1. init 0. in
+
+	(* init 0. is not used because clock is present at the first instant *)
+	let rec level = sim_tank(cflow)
+	and trip_high = up(level -. maxlevel)
+    and trip_low = up(-. (level -. minlevel))
+	(* Setting up multiple zero crossing listeners *)
+    and cflow = present
+		| trip_high -> 0.
+		| trip_low -> maxflow 
+	init maxflow
+     
+	in present (clock) -> (print_float level; print_newline (); graph(cflow, level, t)) init ()
+
+(* The original hybrid model with a polling controller *)
+(*
 let hybrid main_sim () = 
 	let clock = (period (dt)) 
 	and der t = 1. init 0. in
@@ -42,7 +63,8 @@ let hybrid main_sim () =
 	(* init 0. is not used because clock is present at the first instant *)
 	let rec cflow = present (clock) -> let mlevel = sample(level) in controller(mlevel) init 0.
 	and level = sim_tank(cflow) 
-	in present (clock) -> (print_float level; print_newline (); graph(cflow, level, t)) init ()
+	in present (clock) -> (print_float level; print_newline (); graph(cflow, level, t)) init ()*)
+
 
 (* The thing that compiles to the physical robot controller *)
 let node main_robot2 (mlevel, cflow) = (mlevel, cflow) where 

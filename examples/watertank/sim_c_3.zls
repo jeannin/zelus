@@ -1,3 +1,15 @@
+(* No main_robot. Just a controller node that we implicitly assume will be compiled into robot code.
+   Inputs and outputs are mapped at compile-time to the sensors/actuators on the physical robot.
+   Note the absence of explicit getters/setters for robot parts
+   For simulation, the following nodes are used:
+	* controller
+	* sim_tank
+	* main_sim
+	* graph
+   
+   For compilation on a physical robot, the following node is used (nothing else runs)
+	* controller
+*)
 let initlevel = 2.
 let minlevel = 1.
 let maxlevel = 5.
