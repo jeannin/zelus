@@ -1,0 +1,85 @@
+(* Intrinsic properties of the tank itself *)
+
+(* {v:float | v >= 0.}*)
+let initlevel = 2.
+
+(* {v:float | v >= 0.}*)
+let minlevel = 1.
+
+(* {v:float | v > minlevel}*)
+let maxlevel = 5.
+
+(* {v:float | v <= 0.}*)
+let outflow = -1.
+
+(* maxflow must be sufficient to overcome outflow or else system is uncontrollable *)
+(* {v:float | v + outflow >= 0.}*)
+let maxflow = 3.
+
+(* Property of the controller we select *)
+(* {v:float | v >= 0.}*)
+let dt = 0.125
+
+(* Takes into account tank and controller property--margin should be greater than one dt worth of total flow when valve is open and outflow when valve is closed, whichever is more *)
+(* This encodes the "able to react" part of the invariant, which says the system should have enough time to correct a potentially unsafe condition *)
+(* {v:float | v >= dt*max(outflow+maxflow, -outflow) }*)
+let margin = 0.5
+
+(* Control invariant: the system has enough control authority to move the water level in the "correct" direction based on sensor indications *)
+(* Criteria:
+    * When tank is below the turn-on threshold, controlled flow should be greater than or equal to outflow but no more than maxflow (net non-negative flow that's not too fast)
+    * When tank is above the turn-off threshold, controlled flow should be no more than outflow, but also not negative (net non-positive flow that doesn't decrease too fast)
+*)
+(* m:float -> {c:float | 
+    (m <= (minlevel -. dt*.outflow) -> (cflow >= -outflow && cflow <= maxflow)) && 
+    (m >= (maxlevel -. dt*.(outflow+.maxflow)) -> (cflow <= -outflow && cflow >= 0))} *)
+let node controller(mlevel:float) = 
+	let rec cflow = (if mlevel <= minlevel +. margin then maxflow
+		else if mlevel >= maxlevel -. margin then 0. else (0. fby cflow)) in cflow
+
+(* Invariant on the tank physics basically says it obeys the laws of physics *)
+(* May not be needed, this might be inferred from the function structure or the essential parts are already encoded elsewhere *)
+(* x:float -> {v:float | v = (last v +. (x +. outflow) *. dt)} *)
+let node sim_tank(cflow) =
+	let rec mlevel = initlevel fby (mlevel +. ((cflow +. outflow) *. dt)) in mlevel
+
+let node robot_put(key, value) = (print_string "Put value:"); (print_string key); (print_string "->"); (print_float value); (print_newline ())
+
+let node robot_get(key) = 
+	let rec rec mlevel = 5. 
+	and () = (print_string "Get value: "); (print_string key); (print_string "<-"); (print_float mlevel); (print_newline ()) in mlevel
+
+let node real_tank(cflow) = 
+	let mlevel = (robot_get ("level"))
+	and () = (robot_put("flow", cflow)) in level
+
+let node graph(cflow, mlevel, t) = 
+	let s = Scope.scope2
+		(0., 5.,
+			("mlevel", Scope.linear, mlevel),
+			("cflow", Scope.points true, cflow)) in
+	Scope.window ("Water tank", 10.0, t, s)
+	
+let node main_sim () = 
+	let rec cflow = controller(mlevel)
+	(* mlevel:{v:float | v >= minlevel && v <= maxlevel} -- The main safety condition + invariant *)
+	(* Inductive invariant: show that today's control command, integrated over time on today's level, doesn't overflow or empty the tank, since tomorrow we will carry out this computation. *)
+	
+	(* Because cflow and mlevel are mutually recursive, which happens first--do we issue the command to the valve first, or do we read from the tank first? Is it possible to tell without reading through the code and finding unit delays? Possibly not. So it's a good thing that's already figured out for us.*)
+	(* cflow instantaneously depends on mlevel, while the calculation of mlevel (in sim_tank) has a unit delay *)
+	(* mlevel depends on cflow and mlevel itself but they're guarded by a fby, so it really depends on cflow and mlevel from yesterday. *)
+	(* Therefore this program is integrating yesterday's control and level to get today's level (which is mlevel) and then using today's level to calculate today's control *)
+	(* The sequence of events looks like: simulate tank -> compute control -> wait until next time step, repeat. *)
+	(* So by tomorrow, it will take today's level and control, and integrate them to get tomorrow's level. *)
+ 	(* Therefore the controller / valve / level reacts instantly and so the amount by which we exceed (maxlevel -. margin) is strictly less than (dt * (maxflow -. outflow)) *)
+
+	(* We expect nodes to be in-lined while type checking, otherwise fby isn't immediately visible without interpreting functions *)
+	and mlevel = sim_tank(cflow) 
+	and t = 0. fby (t +. dt) in
+	(print_float mlevel; print_newline (); graph(cflow, mlevel, t))
+
+let node main_robot () = 
+	let rec cflow = controller(mlevel)
+	(* Now does this mlevel also need to be verified? *)
+	and mlevel = real_tank(cflow) 
+	and t = 0. fby (t +. dt) in ()
