@@ -1,0 +1,11 @@
+(env (dev (flags (:standard -w -a))))
+
+(rule
+ (targets sawtooth.ml sawtooth_main.ml)
+ (deps (:zl sawtooth.zls) (package zelus))
+ (action (run zeluc -deps -gtk2 -s main -o sawtooth_main %{zl})))
+
+(executables
+ (names sawtooth_main)
+ (libraries lablgtk2 zelus-gtk zelus)
+ (promote (until-clean)))
