@@ -16,13 +16,16 @@ let outflow = -1.
 (* {v:float | v + outflow >= 0.}*)
 let maxflow = 3.
 
+(* ========== END INTRINSIC PROPERTIES ========== *)
+
 (* Property of the controller we select *)
 (* {v:float | v >= 0.}*)
-let dt = 0.125
+let cperiod = 0.125
 
 (* Takes into account tank and controller property--margin should be greater than one dt worth of total flow when valve is open and outflow when valve is closed, whichever is more *)
 (* This encodes the "able to react" part of the invariant, which says the system should have enough time to correct a potentially unsafe condition *)
-(* {v:float | v >= dt*max(outflow+maxflow, -outflow) }*)
+(* Also need to ensure the margins on the upper and lower levels don't overlap or the controller is unstable *)
+(* {v:float | v >= cperiod*max(outflow+maxflow, -outflow) && (maxlevel - minlevel) >= 2*v}*)
 let margin = 0.5
 
 (* Control invariant: the system has enough control authority to move the water level in the "correct" direction based on sensor indications *)
@@ -31,17 +34,17 @@ let margin = 0.5
     * When tank is above the turn-off threshold, controlled flow should be no more than outflow, but also not negative (net non-positive flow that doesn't decrease too fast)
 *)
 (* m:float -> {c:float | 
-    (m <= (minlevel -. dt*.outflow) -> (cflow >= -outflow && cflow <= maxflow)) && 
-    (m >= (maxlevel -. dt*.(outflow+.maxflow)) -> (cflow <= -outflow && cflow >= 0))} *)
+    (m <= (minlevel -. cperiod*.outflow) -> (cflow >= -outflow && cflow <= maxflow)) && 
+    (m >= (maxlevel -. cperiod*.(outflow+.maxflow)) -> (cflow <= -outflow && cflow >= 0))} *)
 let node controller(mlevel:float) = 
 	let rec cflow = (if mlevel <= minlevel +. margin then maxflow
 		else if mlevel >= maxlevel -. margin then 0. else (0. fby cflow)) in cflow
 
 (* Invariant on the tank physics basically says it obeys the laws of physics *)
 (* May not be needed, this might be inferred from the function structure or the essential parts are already encoded elsewhere *)
-(* x:float -> {v:float | v = (last v +. (x +. outflow) *. dt)} *)
+(* x:float -> {v:float | v = (last v +. (x +. outflow) *. cperiod)} *)
 let node sim_tank(cflow) =
-	let rec mlevel = initlevel fby (mlevel +. ((cflow +. outflow) *. dt)) in mlevel
+	let rec mlevel = initlevel fby (mlevel +. ((cflow +. outflow) *. cperiod)) in mlevel
 
 let node robot_put(key, value) = (print_string "Put value:"); (print_string key); (print_string "->"); (print_float value); (print_newline ())
 
