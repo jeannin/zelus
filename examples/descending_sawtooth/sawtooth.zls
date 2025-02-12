@@ -1,9 +1,12 @@
+let node x_reset () = 
+	let rec xr = (-1.) fby xr -. 1. in xr
+
 let hybrid main () = 
   let rec der t = 1. init 0.
 
   (* These three lines are the important bits *)
-  and der x = 1. init x0 reset up(x) -> x0
-  and present (up(x)) -> do x0 = last x0 -. 1. done
-  and init x0 = -1.
+  and der x = 1. init (-1.) reset up(x) -> (x_reset ())
+  (*and present (up(x)) -> do x0 = last x0 -. 1. done
+  and init x0 = -1.*)
 
   in (present (period(0.1)) -> (Scope.window ("Descending Sawtooth", 10.0, t, Scope.scope(-5., 0. ,("x", Scope.linear, x))); (print_float x; print_newline ()))); ()
