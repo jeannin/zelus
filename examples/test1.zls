@@ -1,0 +1,11 @@
+let node add x =
+	let rec y = 0 fby (x + y) in y
+
+let num = 42
+(*
+let hybrid something () = 
+	x where der x = 1.*)
+
+let node main () = 
+	let rec z = (add 1) in
+		print_int z; print_newline ()

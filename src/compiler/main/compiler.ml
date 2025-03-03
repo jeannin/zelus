@@ -156,13 +156,14 @@ let compile modname filename =
     (* Write the symbol table into the interface file *)
     let itc = open_out_bin obj_interf_name in
     apply_with_close_out Modules.write itc;
-    if !Misc.typeonly then raise Stop;
 
     (* Mark functions calls to be inlined. This step uses type informations *)
     (* computed during the causality analysis *)
+    let p = do_step "MARVeLus step"
+          Printer.program (Refinement.program info_ff) p in
+    if !Misc.typeonly then raise Stop;
     let p = do_step "Mark functions calls to be inlined. See below:"
 	      Printer.program Markfunctions.program p in
-
     (* source-to-source transformations *)
 
     (* defines the initial global environment for values *)

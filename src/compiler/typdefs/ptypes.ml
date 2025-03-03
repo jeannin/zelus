@@ -85,6 +85,7 @@ let rec print prio ff { t_desc; t_level; t_index } =
     | Tarrow _ -> 1 | Tlink _ -> prio in
   let prio_current = priority t_desc in
   if prio_current < prio then fprintf ff "(";
+
   begin match t_desc with
   | Tvar ->
       (* prefix non generalized type variables with "_" *)
@@ -95,6 +96,7 @@ let rec print prio ff { t_desc; t_level; t_index } =
      fprintf ff "?"
   | Tproduct(ty_list) -> print_list (print (prio_current + 1)) " *" ff ty_list
   | Tconstr(name, ty_list, _) ->
+  Printf.printf "Tconstr";
      let n = List.length ty_list in
       if n = 1 then
 	fprintf ff "@[%a@ %a@]" (print prio_current)
@@ -102,8 +104,10 @@ let rec print prio ff { t_desc; t_level; t_index } =
       else if n > 1
       then fprintf ff "@[(%a)@ %a@]" (print_list (print 0) ",") ty_list
 		   print_qualid name 
-      else fprintf ff "@[%a@]" print_qualid name
+      else fprintf ff "@[%a@]" print_qualid name;
+      Printf.printf "%s\n" (name.id)
   | Tarrow { ty_kind; ty_name_opt; ty_arg; ty_res } ->
+                  Printf.printf "Arrow\n";
      let print_arg ff ty =
        match ty_name_opt with
        | None -> print (prio_current + 1) ff ty
@@ -175,7 +179,7 @@ let print_value_type_declaration ff { qualid; info = (is_const, ty_scheme) } =
 
 (* the main printing functions *)
 let output_type ff ty =
-  fprintf ff "@[%a@]" (print 0) ty
+  fprintf ff "@[%a@]" (print 999) ty
 
 let output_size ff si = print_size ff si
 
