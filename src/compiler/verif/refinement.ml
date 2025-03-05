@@ -4,13 +4,21 @@ open Modules
 open Zelus
 open Ptypes
 
+let base_type_of_expr e = 
+   let expr_type = Typinfo.get_type e.e_info in
+   match expr_type.t_desc with
+   | Tconstr(qualid, _, _) -> qualid.id
+   | _ -> "Not a basic type constructor"
+
 let expression e ff =
    let expr_type = Typinfo.get_type e.e_info in 
     output_type ff expr_type
 
 let equation ff {eq_desc; eq_loc} =
     match eq_desc with
-    | EQeq(p, e) -> Printf.printf "RHS of equation has type: "; expression e ff
+    | EQeq(p, e) -> (match p.pat_desc with
+        | Evarpat({num; source}) -> Printf.printf "Equation LHS %s = RHS has type: %s\n" source (base_type_of_expr e)
+        | _ -> Printf.printf "Unknown pattern type for LHS" )
     | _ -> Printf.printf "Unknown equation type\n"
 
 let leq ff ({ l_kind; l_eq; l_loc } as l) =

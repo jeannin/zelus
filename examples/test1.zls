@@ -1,7 +1,10 @@
 let node add x =
 	let rec y = 0 fby (x + y) in y
 
+let f x = 1
+
 let num = 42
+let pi = 3. +. 0.14
 (*
 let hybrid something () = 
 	x where der x = 1.*)
